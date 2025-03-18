@@ -165,12 +165,16 @@ export async function fetchAxelarBridgeFee(sourceChain: string, destinationChain
     const axelarDestChain = mapToAxelarChainName(destinationChain);
 
     // First try to get the denom from the symbol
-    let assetDenom;
+    let assetDenom: string;
     try {
-      assetDenom = await axelarQueryApi.getDenomFromSymbol(token, axelarSourceChain);
+      const denomResult = await axelarQueryApi.getDenomFromSymbol(token, axelarSourceChain);
+      if (!denomResult) {
+        throw new Error(`Failed to get denom for ${token} on ${axelarSourceChain}`);
+      }
+      assetDenom = denomResult;
       console.log(`Denom for ${token} on ${axelarSourceChain}: ${assetDenom}`);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (_) {
+    } catch (error) {
+      console.error(`Error getting denom for ${token} on ${axelarSourceChain}:`, error);
       // If we can't get the denom, use a default mapping
       assetDenom = mapTokenToDenom(token);
       console.log(`Using mapped denom for ${token}: ${assetDenom}`);
@@ -186,7 +190,7 @@ export async function fetchAxelarBridgeFee(sourceChain: string, destinationChain
 
     console.log("Axelar transfer fee response:", transferFeeResponse);
 
-    // Also get gas fee estimate for the transaction
+    // Get gas fee estimate for the transaction
     const gasLimit = 300000; // Default gas limit for a simple transfer
     const gasResponse = await axelarQueryApi.estimateGasFee(
       axelarSourceChain,
@@ -199,8 +203,8 @@ export async function fetchAxelarBridgeFee(sourceChain: string, destinationChain
       {
         showDetailedFees: true,
         tokenSymbol: token,
-        destinationContractAddress: "0x0000000000000000000000000000000000000000", // Required by GMPParams interface
-        sourceContractAddress: "0x0000000000000000000000000000000000000000", // Required by GMPParams interface
+        sourceContractAddress: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // Ethereum USDC
+        destinationContractAddress: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174", // Polygon USDC
       }
     );
 
