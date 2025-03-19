@@ -84,6 +84,7 @@ export default function TokenSwap() {
     },
     enabled: !!inputToken && !!outputToken && inputToken !== outputToken && isCorrectNetwork,
     staleTime: 60000, // 1 minute
+    refetchInterval: 5000, // 5 seconds
     retry: 2, // Retry failed requests up to 2 times
   });
 
@@ -208,7 +209,7 @@ export default function TokenSwap() {
               type="number"
               value={inputAmount}
               onChange={(e) => setInputAmount(e.target.value)}
-              className="w-1/2 text-3xl font-medium focus:outline-none bg-transparent"
+              className="w-1/2 text-3xl font-medium focus:outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               placeholder="0"
               min="0"
             />
