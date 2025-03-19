@@ -479,9 +479,12 @@ export async function estimateBridgingTime(sourceChain: string, destinationChain
       avalanche: 0.05, // 3 seconds (1 block)
       polygon: 4.7, // 4:42 minutes (128 blocks)
       binance: 0.77, // 46 seconds (15 blocks)
+      bnb: 0.77, // Alternative name for Binance chain
       fantom: 0.05, // 3 seconds (1 block)
       kava: 0.75, // 45 seconds (1 block)
       cometbft: 0.02, // Instant
+      cosmos: 0.02, // Cosmos SDK chains using CometBFT
+      osmosis: 0.02, // CometBFT chain
       optimism: 30, // 30 minutes (1000000 blocks)
       linea: 81, // 81 minutes (400 blocks)
       filecoin: 52, // 52 minutes (100 blocks)
@@ -491,18 +494,66 @@ export async function estimateBridgingTime(sourceChain: string, destinationChain
       base: 24, // 24 minutes (1000000 blocks)
     };
 
-    // Get finality times for source and destination chains
+    // Destination execution times in minutes
+    // These are estimates for the time to execute the proven transaction
+    // Generally much faster than waiting for full finality
+    const destinationExecutionTimes: Record<string, number> = {
+      ethereum: 0.75, // ~45 seconds for transaction inclusion
+      avalanche: 0.05, // 3 seconds
+      polygon: 0.2, // ~12 seconds
+      binance: 0.1, // ~6 seconds
+      bnb: 0.1, // Alternative name
+      fantom: 0.05, // 3 seconds
+      kava: 0.1, // ~6 seconds
+      cometbft: 0.02, // Instant
+      cosmos: 0.02, // Instant
+      osmosis: 0.02, // Instant
+      optimism: 0.1, // ~6 seconds
+      linea: 0.1, // ~6 seconds
+      filecoin: 0.5, // ~30 seconds
+      moonbeam: 0.1, // ~6 seconds
+      celo: 0.1, // ~6 seconds
+      arbitrum: 0.1, // ~6 seconds
+      base: 0.1, // ~6 seconds
+    };
+
+    // Axelar processing time varies based on network conditions
+    // Generally takes 1-5 minutes
+    const baseAxelarProcessingTime = 2; // 2 minutes base time
+
+    // Add congestion factors
+    // Higher finality chains often have more validator coordination overhead
     const sourceTime = axelarFinalityTimes[source] || 15; // Default if chain not found
-    const destTime = axelarFinalityTimes[destination] || 15;
+    const destExecTime = destinationExecutionTimes[destination] || 0.5;
 
-    // Calculate total time (source finality + destination finality + Axelar processing)
-    // Add a small buffer for Axelar network processing (2-5 minutes)
-    const axelarProcessingTime = 3;
-    const totalTime = sourceTime + destTime + axelarProcessingTime;
+    // Calculate Axelar processing with slight adjustment for complexity
+    // More complex chains might need more validation time
+    const complexityFactor = sourceTime > 10 ? 1.2 : 1.0;
+    const axelarProcessingTime = baseAxelarProcessingTime * complexityFactor;
 
-    // Create a reasonable min-max range (±20% from the calculated time)
-    const min = Math.max(1, Math.floor(totalTime * 0.8));
-    const max = Math.ceil(totalTime * 1.2);
+    // Calculate total time: source finality + axelar processing + destination execution
+    const totalTime = sourceTime + axelarProcessingTime + destExecTime;
+
+    // Create min-max range with variable ranges based on chain reliability
+    // Chains with longer finality often have more variance
+    const sourceVariance = sourceTime > 10 ? 0.3 : 0.2; // 30% variance for slower chains
+    const min = Math.max(1, Math.floor(totalTime * (1 - sourceVariance)));
+    const max = Math.ceil(totalTime * (1 + sourceVariance));
+
+    // For L2 rollups, offer both optimistic and final settlement times
+    const isL2Rollup =
+      ["optimism", "arbitrum", "base", "linea"].includes(source) ||
+      ["optimism", "arbitrum", "base", "linea"].includes(destination);
+
+    if (isL2Rollup) {
+      return {
+        optimistic: { min, max }, // Optimistic confirmation (usable but not finalized on L1)
+        final: {
+          min: Math.max(10, min),
+          max: Math.max(max, sourceTime + 25), // Full L1 settlement can take 20-30+ minutes
+        },
+      };
+    }
 
     return { min, max };
   } catch (error) {
