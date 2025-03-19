@@ -466,11 +466,6 @@ function generateMockTransactions(count = 10) {
   });
 }
 
-/**
- * Estimates bridging time between two chains using Axelar network data
- * Based on Axelar's official finality time documentation
- * @see https://docs.axelar.dev/learn/txduration
- */
 export async function estimateBridgingTime(sourceChain: string, destinationChain: string) {
   try {
     // Normalize chain names
@@ -478,7 +473,7 @@ export async function estimateBridgingTime(sourceChain: string, destinationChain
     const destination = destinationChain.toLowerCase();
 
     // Axelar finality times in minutes for each blockchain
-    // Data from https://docs.axelar.dev/learn/txduration
+    // Data from https://docs.axelar.dev/learn/txduration/#what-is-blockchain-finality
     const axelarFinalityTimes: Record<string, number> = {
       ethereum: 16, // 16 minutes (200 blocks)
       avalanche: 0.05, // 3 seconds (1 block)
