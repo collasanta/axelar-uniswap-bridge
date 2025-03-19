@@ -370,7 +370,8 @@ async function convertToUSD(fee: string, token: string): Promise<number> {
 }
 
 // Fetch recent Axelar transactions using the Token Transfer API
-export async function fetchAxelarTransactions(limit = 10, offset = 0) {
+// Default limit changed from 10 to 5 for initial loading
+export async function fetchAxelarTransactions(limit = 5, offset = 0) {
   try {
     // Using the searchTransfers endpoint from the Token Transfer API
     const response = await axios.post(`${axelarScanBaseUrl}/token/searchTransfers`, {
@@ -432,7 +433,8 @@ export async function fetchAxelarTransactions(limit = 10, offset = 0) {
 }
 
 // Generate mock transaction data for testing or when API fails
-function generateMockTransactions(count = 10) {
+// Default count changed from 10 to 5 for initial loading
+function generateMockTransactions(count = 5) {
   const chains = ["ethereum", "polygon", "avalanche", "fantom", "arbitrum", "optimism", "binance"];
   const statuses = ["executed", "pending", "failed"];
   const tokens = ["USDC", "USDT", "ETH", "WBTC", "DAI"];
@@ -466,7 +468,12 @@ function generateMockTransactions(count = 10) {
   });
 }
 
-export async function estimateBridgingTime(sourceChain: string, destinationChain: string) {
+/**
+ * Estimates bridging time between two chains using Axelar network data
+ * Based on Axelar's official finality time documentation
+ * @see https://docs.axelar.dev/learn/txduration
+ */
+export async function estimateBridgingTime(sourceChain: string, destinationChain: string): Promise<{ min: number; max: number }> {
   try {
     // Normalize chain names
     const source = sourceChain.toLowerCase();
@@ -547,11 +554,8 @@ export async function estimateBridgingTime(sourceChain: string, destinationChain
 
     if (isL2Rollup) {
       return {
-        optimistic: { min, max }, // Optimistic confirmation (usable but not finalized on L1)
-        final: {
-          min: Math.max(10, min),
-          max: Math.max(max, sourceTime + 25), // Full L1 settlement can take 20-30+ minutes
-        },
+        min: Math.max(10, min),
+        max: Math.max(max, sourceTime + 25), // Full L1 settlement can take 20-30+ minutes
       };
     }
 

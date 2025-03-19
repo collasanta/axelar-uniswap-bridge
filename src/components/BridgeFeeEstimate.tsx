@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { CHAINS } from "@/lib/constants";
 import { formatCurrency, formatTimeRange } from "@/lib/utils";
-import { Clock, DollarSign, ExternalLink } from "lucide-react";
+import { AlertCircle, Clock, DollarSign, ExternalLink } from "lucide-react";
 import Image from "next/image";
 
 interface BridgeFeeEstimateProps {
@@ -15,6 +15,9 @@ interface BridgeFeeEstimateProps {
   setDestinationChain: (value: string) => void;
   handleSwapChains: () => void;
   isBridgeFeeLoading: boolean;
+  isBridgeFeeError?: boolean;
+  isBridgeTimeLoading?: boolean;
+  isBridgeTimeError?: boolean;
   bridgeFee: {
     fee: string;
     token: string;
@@ -36,9 +39,9 @@ function getChainIcon(chainId: string): string {
     ethereum: "/images/eth.svg",
     polygon: "/images/matic.svg",
     avalanche: "/images/atom.svg", // Using atom as a fallback
-    fantom: "/images/atom.svg",    // Using atom as a fallback
-    arbitrum: "/images/eth.svg",   // Using eth as a fallback
-    optimism: "/images/eth.svg",   // Using eth as a fallback
+    fantom: "/images/atom.svg", // Using atom as a fallback
+    arbitrum: "/images/eth.svg", // Using eth as a fallback
+    optimism: "/images/eth.svg", // Using eth as a fallback
     binance: "/images/bnb.svg",
   };
 
@@ -52,6 +55,9 @@ export function BridgeFeeEstimate({
   setDestinationChain,
   handleSwapChains,
   isBridgeFeeLoading,
+  isBridgeFeeError,
+  isBridgeTimeLoading,
+  isBridgeTimeError,
   bridgeFee,
   bridgeTime,
 }: BridgeFeeEstimateProps) {
@@ -95,8 +101,8 @@ export function BridgeFeeEstimate({
               {sourceChain && (
                 <div className="flex items-center space-x-2">
                   <div className="w-5 h-5 rounded-full overflow-hidden">
-                    <Image 
-                      src={getChainIcon(sourceChain)} 
+                    <Image
+                      src={getChainIcon(sourceChain)}
                       alt={CHAINS[sourceChain as keyof typeof CHAINS]?.name || sourceChain}
                       width={20}
                       height={20}
@@ -113,8 +119,8 @@ export function BridgeFeeEstimate({
               <SelectItem key={id} value={id}>
                 <div className="flex items-center space-x-2">
                   <div className="w-5 h-5 rounded-full overflow-hidden">
-                    <Image 
-                      src={getChainIcon(id)} 
+                    <Image
+                      src={getChainIcon(id)}
                       alt={chain.name}
                       width={20}
                       height={20}
@@ -130,7 +136,7 @@ export function BridgeFeeEstimate({
       </div>
 
       {/* Destination Chain */}
-      <div className="mb-3">
+      <div className="mb-8">
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium text-gray-500 pl-2">Destination Chain</label>
           <Button variant="ghost" size="icon" onClick={handleSwapChains} className="text-gray-500 hover:text-gray-700"></Button>
@@ -141,8 +147,8 @@ export function BridgeFeeEstimate({
               {destinationChain && (
                 <div className="flex items-center space-x-2">
                   <div className="w-5 h-5 rounded-full overflow-hidden">
-                    <Image 
-                      src={getChainIcon(destinationChain)} 
+                    <Image
+                      src={getChainIcon(destinationChain)}
                       alt={CHAINS[destinationChain as keyof typeof CHAINS]?.name || destinationChain}
                       width={20}
                       height={20}
@@ -159,8 +165,8 @@ export function BridgeFeeEstimate({
               <SelectItem key={id} value={id} disabled={id === sourceChain}>
                 <div className="flex items-center space-x-2">
                   <div className="w-5 h-5 rounded-full overflow-hidden">
-                    <Image 
-                      src={getChainIcon(id)} 
+                    <Image
+                      src={getChainIcon(id)}
                       alt={chain.name}
                       width={20}
                       height={20}
@@ -176,9 +182,46 @@ export function BridgeFeeEstimate({
       </div>
 
       {isBridgeFeeLoading ? (
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
+        <div className="space-y-4 bg-gray-50 rounded-xl p-4 border border-gray-100">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center space-x-2">
+                <ExternalLink className="h-4 w-4 text-blue-500" />
+                <span className="text-gray-700">Gas Fee</span>
+              </div>
+              <Skeleton className="h-4 w-24" />
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center space-x-2">
+                <ExternalLink className="h-4 w-4 text-gray-400" />
+                <span className="text-gray-700">Native Fee</span>
+              </div>
+              <Skeleton className="h-4 w-20" />
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center space-x-2">
+                <DollarSign className="h-4 w-4 text-green-500" />
+                <span className="text-gray-700">USD Equivalent</span>
+              </div>
+              <Skeleton className="h-4 w-16" />
+            </div>
+          </div>
+
+          {/* Bridge Time Estimate Skeleton */}
+          <div className="flex items-center justify-between text-sm border-t pt-3 mt-1">
+            <div className="flex items-center space-x-2">
+              <Clock className="h-4 w-4 text-pink-500" />
+              <span className="text-gray-700">Estimated Time</span>
+            </div>
+            <Skeleton className="h-5 w-24" />
+          </div>
+        </div>
+      ) : isBridgeFeeError ? (
+        <div className="text-sm text-gray-500 bg-gray-50 rounded-xl p-4 border border-gray-100">
+          <div className="flex items-center space-x-2 text-red-500">
+            <AlertCircle className="h-4 w-4" />
+            <span>Error loading fee estimates</span>
+          </div>
         </div>
       ) : bridgeFee ? (
         <div className="space-y-4 bg-gray-50 rounded-xl p-4 border border-gray-100">
@@ -189,43 +232,59 @@ export function BridgeFeeEstimate({
                 <span className="text-gray-700">Gas Fee</span>
               </div>
               <span className="font-medium">
-                {bridgeFee.fee} {bridgeFee.token}
+                {bridgeFee?.fee} {bridgeFee?.token}
               </span>
             </div>
             {/* Display native token fee if available */}
-            {bridgeFee.nativeToken && (
+            {bridgeFee?.nativeToken && (
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center space-x-2">
                   <ExternalLink className="h-4 w-4 text-gray-400" />
                   <span className="text-gray-700">Native Fee</span>
                 </div>
                 <span className="font-medium">
-                  {bridgeFee.nativeToken.fee} {bridgeFee.nativeToken.token}
+                  {bridgeFee?.nativeToken?.fee} {bridgeFee?.nativeToken?.token}
                 </span>
               </div>
             )}
-            {bridgeFee.usd && (
+            {bridgeFee?.usd && (
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center space-x-2">
                   <DollarSign className="h-4 w-4 text-green-500" />
                   <span className="text-gray-700">USD Equivalent</span>
                 </div>
-                <span className="font-medium">{formatCurrency(bridgeFee.usd)}</span>
+                <span className="font-medium">{formatCurrency(bridgeFee?.usd || 0)}</span>
               </div>
             )}
           </div>
 
           {/* Bridge Time Estimate */}
-          {bridgeTime && (
+          {isBridgeTimeLoading && !isBridgeFeeLoading ? (
             <div className="flex items-center justify-between text-sm border-t pt-3 mt-1">
               <div className="flex items-center space-x-2">
                 <Clock className="h-4 w-4 text-pink-500" />
                 <span className="text-gray-700">Estimated Time</span>
               </div>
-              <span className="font-medium">
-                {formatTimeRange(bridgeTime.min, bridgeTime.max)}
-              </span>
+              <Skeleton className="h-5 w-24" />
             </div>
+          ) : isBridgeTimeError ? (
+            <div className="flex items-center justify-between text-sm border-t pt-3 mt-1">
+              <div className="flex items-center space-x-2">
+                <Clock className="h-4 w-4 text-pink-500" />
+                <span className="text-gray-700">Estimated Time</span>
+              </div>
+              <span className="text-red-500 text-sm">Error loading time</span>
+            </div>
+          ) : (
+            bridgeTime && (
+              <div className="flex items-center justify-between text-sm border-t pt-3 mt-1">
+                <div className="flex items-center space-x-2">
+                  <Clock className="h-4 w-4 text-pink-500" />
+                  <span className="text-gray-700">Estimated Time</span>
+                </div>
+                <span className="font-medium">{formatTimeRange(bridgeTime.min, bridgeTime.max)}</span>
+              </div>
+            )
           )}
         </div>
       ) : (

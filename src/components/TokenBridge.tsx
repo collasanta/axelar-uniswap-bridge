@@ -2,7 +2,7 @@
 
 import { useWallet } from "@/context/WalletContext";
 import { useQuery } from "@tanstack/react-query";
-import { Wallet } from "lucide-react";
+import { AlertCircle, ExternalLink, Wallet } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ export default function TokenBridge() {
   const [slippage, setSlippage] = useState<string>("0.5");
   const [deadline, setDeadline] = useState<string>("30");
 
-  const { data: bridgeFee, isLoading: isBridgeFeeLoading } = useQuery<
+  const { data: bridgeFee, isLoading: isBridgeFeeLoading, error: bridgeFeeError } = useQuery<
     {
       fee: string;
       token: string;
@@ -38,7 +38,7 @@ export default function TokenBridge() {
   });
 
   // Fetch bridge time estimate
-  const { data: bridgeTime } = useQuery<{ min: number; max: number } | null, Error>({
+  const { data: bridgeTime, isLoading: isBridgeTimeLoading, error: bridgeTimeError } = useQuery({
     queryKey: ["bridgeTime", sourceChain, destinationChain],
     queryFn: () => estimateBridgingTime(sourceChain, destinationChain),
     enabled: !!sourceChain && !!destinationChain && sourceChain !== destinationChain,
@@ -121,7 +121,15 @@ export default function TokenBridge() {
           <Button
             className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white py-6 rounded-xl font-medium transition-colors"
             onClick={handleBridgeTransaction}
-            disabled={isBridgeSigning}
+            disabled={
+              isBridgeSigning || 
+              isBridgeFeeLoading || 
+              isBridgeTimeLoading || 
+              !inputAmount || 
+              parseFloat(inputAmount) <= 0 ||
+              !!bridgeFeeError ||
+              !!bridgeTimeError
+            }
           >
             {isBridgeSigning ? (
               <span className="flex items-center">
@@ -153,8 +161,33 @@ export default function TokenBridge() {
                 </svg>
                 Bridge Transaction Signed!
               </span>
+            ) : isBridgeFeeLoading || isBridgeTimeLoading ? (
+              <span className="flex items-center">
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Loading Estimates...
+              </span>
+            ) : bridgeFeeError || bridgeTimeError ? (
+              <span className="flex items-center">
+                <AlertCircle className="h-5 w-5 mr-2 text-white" />
+                Error Loading Estimates
+              </span>
             ) : (
-              <span>Bridge Tokens</span>
+              <span className="flex items-center">
+                <ExternalLink className="h-5 w-5 mr-2" />
+                Bridge Tokens
+              </span>
             )}
           </Button>
         ) : (

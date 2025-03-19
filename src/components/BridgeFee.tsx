@@ -1,14 +1,14 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, ChevronUp, Clock, DollarSign, Info, Layers, X, Zap } from "lucide-react";
-import React, { useState } from "react";
+import { AlertCircle, ChevronDown, ChevronUp, Clock, DollarSign, Info, Layers, X, Zap } from "lucide-react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fetchAxelarBridgeFee } from "@/lib/api";
-import { estimateBridgingTime, formatCurrency } from "@/lib/utils";
+import { estimateBridgingTime, fetchAxelarBridgeFee } from "@/lib/api";
+import { formatCurrency, formatTimeRange } from "@/lib/utils";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
 import { DialogHeader } from "./ui/dialog";
 
@@ -68,20 +68,28 @@ function FeeBreakdown({ details }: { details: FeeDetails }) {
 
 export default function BridgeFee({ sourceChain, destinationChain, token }: BridgeFeeProps) {
   // Fetch bridge fee
-  const { data: bridgeFee, isLoading: isBridgeFeeLoading } = useQuery({
+  const {
+    data: bridgeFee,
+    isLoading: isBridgeFeeLoading,
+    error: bridgeFeeError,
+  } = useQuery({
     queryKey: ["bridgeFee", sourceChain, destinationChain, token],
     queryFn: () => fetchAxelarBridgeFee(sourceChain, destinationChain, token),
     enabled: !!sourceChain && !!destinationChain && !!token && sourceChain !== destinationChain,
     staleTime: 60000, // 1 minute
   });
 
-  // Calculate bridge time estimate directly (no need for API call)
-  const bridgeTime = React.useMemo(() => {
-    if (sourceChain && destinationChain && sourceChain !== destinationChain) {
-      return estimateBridgingTime(sourceChain, destinationChain);
-    }
-    return null;
-  }, [sourceChain, destinationChain]);
+  // Fetch bridge time estimate
+  const {
+    data: bridgeTime,
+    isLoading: isBridgeTimeLoading,
+    error: bridgeTimeError,
+  } = useQuery({
+    queryKey: ["bridgeTime", sourceChain, destinationChain],
+    queryFn: () => estimateBridgingTime(sourceChain, destinationChain),
+    enabled: !!sourceChain && !!destinationChain && sourceChain !== destinationChain,
+    staleTime: 60000, // 1 minute
+  });
 
   return (
     <Card className="border rounded-xl shadow-lg">
@@ -98,6 +106,13 @@ export default function BridgeFee({ sourceChain, destinationChain, token }: Brid
           <div className="space-y-2">
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-3/4" />
+          </div>
+        ) : bridgeFeeError ? (
+          <div className="text-sm text-gray-500 bg-gray-50 rounded-xl p-4 border border-gray-100">
+            <div className="flex items-center space-x-2 text-red-500">
+              <AlertCircle className="h-4 w-4" />
+              <span>Error loading fee estimates</span>
+            </div>
           </div>
         ) : bridgeFee ? (
           <div className="space-y-4 bg-gray-50 rounded-xl p-4 border border-gray-100">
@@ -124,86 +139,103 @@ export default function BridgeFee({ sourceChain, destinationChain, token }: Brid
             {bridgeFee.details && <FeeBreakdown details={bridgeFee.details} />}
 
             {/* Bridge Time Estimate */}
-            {bridgeTime && (
+            {bridgeTimeError ? (
               <div className="flex items-center space-x-2 text-sm border-t pt-3 mt-1">
                 <Clock className="h-4 w-4 text-pink-500" />
                 <span className="text-gray-500">Estimated Time:</span>
-                <span className="font-medium">{bridgeTime.formatted}</span>
+                <span className="text-red-500 text-sm">Error loading time</span>
+              </div>
+            ) : (
+              bridgeTime && (
+                <div className="flex items-center space-x-2 text-sm border-t pt-3 mt-1">
+                  <Clock className="h-4 w-4 text-pink-500" />
+                  <span className="text-gray-500">Estimated Time:</span>
+                  <span className="font-medium">{formatTimeRange(bridgeTime.min, bridgeTime.max)}</span>
 
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <button className="ml-auto text-xs text-blue-500 hover:text-blue-700 flex items-center">
-                      <Info className="h-3 w-3 mr-1" />
-                      <span>Details</span>
-                    </button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <div className="flex items-center justify-between">
-                        <DialogTitle>Bridging Time Details</DialogTitle>
-                        <DialogClose className="rounded-full hover:bg-gray-100 p-1">
-                          <X className="h-4 w-4" />
-                        </DialogClose>
-                      </div>
-                      <DialogDescription>Estimated time for cross-chain transactions via Axelar Network</DialogDescription>
-                    </DialogHeader>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <button className="ml-auto text-xs text-blue-500 hover:text-blue-700 flex items-center">
+                        <Info className="h-3 w-3 mr-1" />
+                        <span>Details</span>
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <div className="flex items-center justify-between">
+                          <DialogTitle>Bridging Time Details</DialogTitle>
+                          <DialogClose className="rounded-full hover:bg-gray-100 p-1">
+                            <X className="h-4 w-4" />
+                          </DialogClose>
+                        </div>
+                        <DialogDescription>Estimated time for cross-chain transactions via Axelar Network</DialogDescription>
+                      </DialogHeader>
 
-                    <div className="space-y-4 mt-4">
-                      <div className="space-y-2">
-                        <h4 className="font-medium text-sm">Estimated Total Time</h4>
-                        <div className="flex items-center p-3 bg-pink-50 rounded-lg border border-pink-100">
-                          <Clock className="h-5 w-5 text-pink-500 mr-2" />
-                          <div>
-                            <p className="font-semibold">{bridgeTime.formatted}</p>
-                            <p className="text-xs text-gray-500">
-                              From {sourceChain} to {destinationChain}
-                            </p>
+                      <div className="space-y-4 mt-4">
+                        <div className="space-y-2">
+                          <h4 className="font-medium text-sm">Estimated Total Time</h4>
+                          <div className="flex items-center p-3 bg-pink-50 rounded-lg border border-pink-100">
+                            <Clock className="h-5 w-5 text-pink-500 mr-2" />
+                            <div>
+                              <p className="font-semibold">
+                                {bridgeTime.min} - {bridgeTime.max} minutes
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                From {sourceChain} to {destinationChain}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <div className="space-y-2">
-                        <h4 className="font-medium text-sm">Blockchain Finality Times</h4>
-                        <div className="border rounded-lg overflow-hidden">
-                          <table className="w-full text-sm">
-                            <thead className="bg-gray-50">
-                              <tr>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Blockchain
-                                </th>
-                                <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Finality Time
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                              <tr>
-                                <td className="px-4 py-2 capitalize">{sourceChain}</td>
-                                <td className="px-4 py-2 text-right">{Math.round((bridgeTime.minutes - 2) * 0.6)} min</td>
-                              </tr>
-                              <tr>
-                                <td className="px-4 py-2 capitalize">{destinationChain}</td>
-                                <td className="px-4 py-2 text-right">{Math.round((bridgeTime.minutes - 2) * 0.4)} min</td>
-                              </tr>
-                              <tr className="bg-gray-50">
-                                <td className="px-4 py-2 font-medium">Axelar Processing</td>
-                                <td className="px-4 py-2 text-right">~2 min</td>
-                              </tr>
-                            </tbody>
-                          </table>
+                        <div className="space-y-2">
+                          <h4 className="font-medium text-sm">Blockchain Finality Times</h4>
+                          <div className="border rounded-lg overflow-hidden">
+                            <table className="w-full text-sm">
+                              <thead className="bg-gray-50">
+                                <tr>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Blockchain
+                                  </th>
+                                  <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Finality Time
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-200">
+                                <tr>
+                                  <td className="px-4 py-2 capitalize">{sourceChain}</td>
+                                  <td className="px-4 py-2 text-right">
+                                    {Math.round(((bridgeTime.min + bridgeTime.max) / 2) * 0.6)} min
+                                  </td>
+                                </tr>
+                                <tr>
+                                  <td className="px-4 py-2 capitalize">{destinationChain}</td>
+                                  <td className="px-4 py-2 text-right">
+                                    {Math.round(((bridgeTime.min + bridgeTime.max) / 2) * 0.4)} min
+                                  </td>
+                                </tr>
+                                <tr className="bg-gray-50">
+                                  <td className="px-4 py-2 font-medium">Axelar Processing</td>
+                                  <td className="px-4 py-2 text-right">~2 min</td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-2">
+                            Note: Actual bridging times may vary based on network conditions. These estimates are based on typical
+                            finality times for each blockchain.
+                          </p>
                         </div>
-                        <p className="text-xs text-gray-500 mt-2">
-                          Note: Actual bridging times may vary based on network conditions. These estimates are based on typical
-                          finality times for each blockchain.
-                        </p>
                       </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              )
             )}
 
-            <Button className="w-full mt-2 bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-full font-medium transition-colors">
+            <Button
+              className="w-full mt-6 bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-full font-medium transition-colors"
+              disabled={isBridgeFeeLoading || isBridgeTimeLoading || !!bridgeFeeError || !!bridgeTimeError}
+            >
               <div className="flex items-center justify-center space-x-2">
                 <Zap className="h-4 w-4" />
                 <span>Bridge Tokens</span>

@@ -2,7 +2,7 @@
 
 import { useWallet } from "@/context/WalletContext";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDown, BarChart2, Percent, Wallet } from "lucide-react";
+import { AlertCircle, ArrowDown, ArrowRightLeft, BarChart2, Percent, Wallet } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { SettingsModal } from "./SettingsModal";
@@ -349,9 +349,23 @@ export default function TokenSwap() {
         <div className="space-y-1 pt-6 border-t">
           <h3 className="text-sm font-medium text-gray-700">Swap Details</h3>
           {isPoolDataLoading ? (
-            <div className="mb-2">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-3/4" />
+            <div className="space-y-4 bg-gray-50 rounded-xl p-4 border border-gray-100">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center space-x-2">
+                    <Percent className="h-4 w-4 text-purple-500" />
+                    <span className="text-gray-700">Swap Fee</span>
+                  </div>
+                  <Skeleton className="h-4 w-16" />
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center space-x-2">
+                    <BarChart2 className="h-4 w-4 text-blue-500" />
+                    <span className="text-gray-700">24h Volume</span>
+                  </div>
+                  <Skeleton className="h-4 w-28" />
+                </div>
+              </div>
             </div>
           ) : poolData ? (
             <div className="space-y-4 bg-gray-50 rounded-xl p-4 border border-gray-100">
@@ -391,7 +405,16 @@ export default function TokenSwap() {
         {isConnected ? (
           <Button
             className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white py-6 rounded-xl font-medium transition-colors"
-            disabled={!poolData || inputAmount === "0" || !inputAmount || isSwapSigning || inputToken === outputToken}
+            disabled={
+              !poolData ||
+              inputAmount === "0" ||
+              !inputAmount ||
+              isSwapSigning ||
+              inputToken === outputToken ||
+              isPoolDataLoading ||
+              !!poolDataError ||
+              !isCorrectNetwork
+            }
             onClick={handleSwapTransaction}
           >
             {isSwapSigning ? (
@@ -424,8 +447,33 @@ export default function TokenSwap() {
                 </svg>
                 Swap Transaction Signed!
               </span>
+            ) : isPoolDataLoading ? (
+              <span className="flex items-center">
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Loading Swap Rates...
+              </span>
+            ) : poolDataError ? (
+              <span className="flex items-center">
+                <AlertCircle className="h-5 w-5 mr-2 text-white" />
+                Error Loading Rates
+              </span>
             ) : (
-              <span>Swap</span>
+              <span className="flex items-center">
+                <ArrowRightLeft className="h-5 w-5 mr-2" />
+                Swap
+              </span>
             )}
           </Button>
         ) : (

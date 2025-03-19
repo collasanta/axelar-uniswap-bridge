@@ -24,7 +24,7 @@ export function BridgeSelection({ inputAmount, setInputAmount, bridgeFee, isBrid
   const calculateBridgeOutput = () => {
     // Early return for invalid input
     if (!inputAmount || parseFloat(inputAmount) <= 0) return "0";
-    
+
     const inputAmountNum = parseFloat(inputAmount);
     let feeAmount = 0;
 
@@ -32,10 +32,10 @@ export function BridgeSelection({ inputAmount, setInputAmount, bridgeFee, isBrid
     if (bridgeFee && bridgeFee.fee) {
       feeAmount = parseFloat(bridgeFee.fee);
     }
-    
+
     // Calculate output (input minus fee)
     const output = Math.max(0, inputAmountNum - feeAmount);
-    
+
     // Format with 6 decimal places for USDC
     return output.toFixed(6);
   };
@@ -62,16 +62,7 @@ export function BridgeSelection({ inputAmount, setInputAmount, bridgeFee, isBrid
           <div className="w-26 rounded-full border-gray-200 bg-white hover:bg-gray-50 py-2 px-3 flex items-center justify-center border">
             <div className="flex items-center space-x-2">
               <div className="w-6 h-6 rounded-full flex items-center justify-center bg-gray-100">
-                <Image
-                  src={TOKENS.USDC.logo}
-                  alt={TOKENS.USDC.name}
-                  width={20}
-                  height={20}
-                  className="w-5 h-5"
-                  onError={() => {
-                    // Fallback handled via CSS
-                  }}
-                />
+                <Image src={TOKENS.USDC.logo} alt={TOKENS.USDC.name} width={20} height={20} className="w-5 h-5" />
               </div>
               <span className="text-sm">USDC</span>
             </div>
@@ -99,16 +90,7 @@ export function BridgeSelection({ inputAmount, setInputAmount, bridgeFee, isBrid
           <div className="w-26 rounded-full border-gray-200 bg-pink-500 text-white hover:bg-pink-600 py-2 px-3 flex items-center justify-center">
             <div className="flex items-center space-x-2">
               <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center">
-                <Image
-                  src={TOKENS.USDC.logo}
-                  alt={TOKENS.USDC.name}
-                  width={20}
-                  height={20}
-                  className="w-5 h-5"
-                  onError={() => {
-                    // Fallback handled via CSS
-                  }}
-                />
+                <Image src={TOKENS.USDC.logo} alt={TOKENS.USDC.name} width={20} height={20} className="w-5 h-5" />
               </div>
               <span className="text-sm">USDC</span>
             </div>
