@@ -17,16 +17,13 @@ import { SettingsModal } from "./SettingsModal";
 export default function TokenBridge() {
   const { isConnected, connectWallet } = useWallet();
   const [inputAmount, setInputAmount] = useState<string>("1");
-  // Lock tokens to USDC for both input and output - these are used in the BridgeSelection component
+  // Lock tokens to USDC for both input and output
   const [sourceChain, setSourceChain] = useState<string>("ethereum");
   const [destinationChain, setDestinationChain] = useState<string>("polygon");
 
   const [slippage, setSlippage] = useState<string>("0.5");
   const [deadline, setDeadline] = useState<string>("30");
 
-  // We don't need to fetch pool data since we're only using USDC to USDC bridging
-
-  // Fetch bridge fee - always use USDC
   const { data: bridgeFee, isLoading: isBridgeFeeLoading } = useQuery<
     {
       fee: string;

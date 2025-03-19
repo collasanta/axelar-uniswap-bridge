@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { ethers } from 'ethers';
-import { CHAINS } from '@/lib/constants';
+import { CHAINS } from "@/lib/constants";
+import { ethers } from "ethers";
+import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 
 // Add Ethereum provider to window type
 declare global {
@@ -35,7 +35,7 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
 export function useWallet() {
   const context = useContext(WalletContext);
   if (context === undefined) {
-    throw new Error('useWallet must be used within a WalletProvider');
+    throw new Error("useWallet must be used within a WalletProvider");
   }
   return context;
 }
@@ -56,16 +56,16 @@ export function WalletProvider({ children }: WalletProviderProps) {
   // Initialize provider from window.ethereum if available
   useEffect(() => {
     const initProvider = async () => {
-      if (typeof window !== 'undefined' && window.ethereum) {
+      if (typeof window !== "undefined" && window.ethereum) {
         try {
           // Check if already connected
           const ethProvider = new ethers.providers.Web3Provider(window.ethereum);
           const accounts = await ethProvider.listAccounts();
-          
+
           if (accounts.length > 0) {
             const network = await ethProvider.getNetwork();
             const ethSigner = ethProvider.getSigner();
-            
+
             setAccount(accounts[0]);
             setChainId(network.chainId);
             setProvider(ethProvider);
@@ -73,7 +73,7 @@ export function WalletProvider({ children }: WalletProviderProps) {
             setIsConnected(true);
           }
         } catch (err) {
-          console.error('Failed to initialize wallet provider:', err);
+          console.error("Failed to initialize wallet provider:", err);
         }
       }
     };
@@ -83,7 +83,7 @@ export function WalletProvider({ children }: WalletProviderProps) {
 
   // Listen for account and chain changes
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.ethereum) {
+    if (typeof window !== "undefined" && window.ethereum) {
       const handleAccountsChanged = (accounts: unknown) => {
         if (Array.isArray(accounts)) {
           if (accounts.length === 0) {
@@ -96,35 +96,35 @@ export function WalletProvider({ children }: WalletProviderProps) {
       };
 
       const handleChainChanged = (chainIdHex: unknown) => {
-        if (typeof chainIdHex === 'string') {
+        if (typeof chainIdHex === "string") {
           const newChainId = parseInt(chainIdHex, 16);
           setChainId(newChainId);
         }
       };
 
       const handleDisconnect = (error: unknown) => {
-        console.log('Wallet disconnected', error);
+        console.log("Wallet disconnected", error);
         disconnectWallet();
       };
 
       const ethereum = window.ethereum;
-      ethereum.on('accountsChanged', handleAccountsChanged);
-      ethereum.on('chainChanged', handleChainChanged);
-      ethereum.on('disconnect', handleDisconnect);
+      ethereum.on("accountsChanged", handleAccountsChanged);
+      ethereum.on("chainChanged", handleChainChanged);
+      ethereum.on("disconnect", handleDisconnect);
 
       return () => {
-        ethereum.removeListener('accountsChanged', handleAccountsChanged);
-        ethereum.removeListener('chainChanged', handleChainChanged);
-        ethereum.removeListener('disconnect', handleDisconnect);
+        ethereum.removeListener("accountsChanged", handleAccountsChanged);
+        ethereum.removeListener("chainChanged", handleChainChanged);
+        ethereum.removeListener("disconnect", handleDisconnect);
       };
     }
   }, [account]);
 
   const connectWallet = async () => {
     setError(null);
-    
-    if (typeof window === 'undefined' || !window.ethereum) {
-      setError('MetaMask is not installed. Please install MetaMask to connect your wallet.');
+
+    if (typeof window === "undefined" || !window.ethereum) {
+      setError("MetaMask is not installed. Please install MetaMask to connect your wallet.");
       return;
     }
 
@@ -132,23 +132,23 @@ export function WalletProvider({ children }: WalletProviderProps) {
 
     try {
       const ethProvider = new ethers.providers.Web3Provider(window.ethereum);
-      const accounts = await ethProvider.send('eth_requestAccounts', []);
+      const accounts = await ethProvider.send("eth_requestAccounts", []);
       const network = await ethProvider.getNetwork();
       const ethSigner = ethProvider.getSigner();
-      
+
       setAccount(accounts[0]);
       setChainId(network.chainId);
       setProvider(ethProvider);
       setSigner(ethSigner);
       setIsConnected(true);
-      
+
       // Switch to Ethereum if not on it
       if (network.chainId !== CHAINS.ethereum.id) {
         await switchNetwork(CHAINS.ethereum.id);
       }
     } catch (err) {
-      console.error('Error connecting wallet:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Failed to connect wallet';
+      console.error("Error connecting wallet:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to connect wallet";
       setError(errorMessage);
     } finally {
       setIsConnecting(false);
@@ -165,34 +165,34 @@ export function WalletProvider({ children }: WalletProviderProps) {
 
   const switchNetwork = async (targetChainId: number): Promise<boolean> => {
     if (!window.ethereum) {
-      setError('MetaMask is not installed');
+      setError("MetaMask is not installed");
       return false;
     }
 
     try {
       await window.ethereum.request({
-        method: 'wallet_switchEthereumChain',
+        method: "wallet_switchEthereumChain",
         params: [{ chainId: `0x${targetChainId.toString(16)}` }],
       });
       return true;
     } catch (switchError) {
       // This error code indicates that the chain has not been added to MetaMask
-      if (switchError && typeof switchError === 'object' && 'code' in switchError && switchError.code === 4902) {
+      if (switchError && typeof switchError === "object" && "code" in switchError && switchError.code === 4902) {
         try {
-          const chain = Object.values(CHAINS).find(c => c.id === targetChainId);
+          const chain = Object.values(CHAINS).find((c) => c.id === targetChainId);
           if (!chain) {
             throw new Error(`Chain with ID ${targetChainId} not found in constants`);
           }
 
           await window.ethereum.request({
-            method: 'wallet_addEthereumChain',
+            method: "wallet_addEthereumChain",
             params: [
               {
                 chainId: `0x${targetChainId.toString(16)}`,
                 chainName: chain.name,
                 nativeCurrency: {
-                  name: 'Ether',
-                  symbol: 'ETH',
+                  name: "Ether",
+                  symbol: "ETH",
                   decimals: 18,
                 },
                 rpcUrls: [chain.rpcUrl],
@@ -202,20 +202,20 @@ export function WalletProvider({ children }: WalletProviderProps) {
           });
           return true;
         } catch (addError) {
-          console.error('Error adding chain:', addError);
-          setError('Failed to add network to MetaMask');
+          console.error("Error adding chain:", addError);
+          setError("Failed to add network to MetaMask");
           return false;
         }
       }
-      console.error('Error switching chain:', switchError);
-      setError('Failed to switch network');
+      console.error("Error switching chain:", switchError);
+      setError("Failed to switch network");
       return false;
     }
   };
 
   const value = {
     account,
-    address: account, // Provide address as an alias for account
+    address: account,
     chainId,
     provider,
     signer,
