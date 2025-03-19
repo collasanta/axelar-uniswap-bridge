@@ -22,24 +22,20 @@ interface BridgeSelectionProps {
 export function BridgeSelection({ inputAmount, setInputAmount, bridgeFee, isBridgeFeeLoading = false }: BridgeSelectionProps) {
   // Calculate the output amount (input amount minus fee)
   const calculateBridgeOutput = () => {
+    // Early return for invalid input
     if (!inputAmount || parseFloat(inputAmount) <= 0) return "0";
-
-    // Default fee percentage if no bridge fee data is available
-    const defaultFeePercentage = 0.0; // 0.1%
-
+    
+    const inputAmountNum = parseFloat(inputAmount);
     let feeAmount = 0;
 
+    // Calculate fee if available
     if (bridgeFee && bridgeFee.fee) {
-      // If we have a specific fee amount in USDC
       feeAmount = parseFloat(bridgeFee.fee);
-    } else {
-      // Use default percentage-based fee
-      feeAmount = parseFloat(inputAmount) * defaultFeePercentage;
     }
-
+    
     // Calculate output (input minus fee)
-    const output = Math.max(0, parseFloat(inputAmount) - feeAmount);
-
+    const output = Math.max(0, inputAmountNum - feeAmount);
+    
     // Format with 6 decimal places for USDC
     return output.toFixed(6);
   };
@@ -52,7 +48,13 @@ export function BridgeSelection({ inputAmount, setInputAmount, bridgeFee, isBrid
           <input
             type="number"
             value={inputAmount}
-            onChange={(e) => setInputAmount(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              // Only update if it's a valid number or empty
+              if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                setInputAmount(value);
+              }
+            }}
             className="w-1/2 text-3xl font-medium focus:outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             placeholder="0"
             min="0"

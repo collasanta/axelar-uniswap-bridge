@@ -88,16 +88,9 @@ export default function TokenSwap() {
     retry: 2, // Retry failed requests up to 2 times
   });
 
-  // Calculate swap rate
+  // Calculate swap rate - optimized for better performance
   const calculateSwapRate = () => {
     if (!poolData) return "0";
-
-    // Check token symbols from the pool data
-    const token0Symbol = poolData.token0?.symbol || "USDC";
-    const token1Symbol = poolData.token1?.symbol || "WETH";
-
-    console.log("Token symbols:", token0Symbol, token1Symbol);
-    console.log("Input/Output tokens:", inputToken, outputToken);
 
     // Use the ETH price from the subgraph data
     if ((inputToken === "ETH" || inputToken === "WETH") && outputToken === "USDC") {
@@ -108,23 +101,21 @@ export default function TokenSwap() {
       return (1 / parseFloat(poolData.ethPriceUSD)).toFixed(6);
     }
 
-    console.error("Error calculating swapRate");
-    return 0;
+    return "0";
   };
 
-  // Calculate output amount
+  // Calculate output amount - optimized for better performance
   const calculateOutputAmount = () => {
-    if (!poolData || !inputAmount) return "0";
+    // Early return for invalid inputs
+    if (!poolData || !inputAmount || parseFloat(inputAmount) <= 0) return "0";
 
     const rate = calculateSwapRate();
-    const amount = parseFloat(inputAmount) * parseFloat(rate);
+    const inputAmountNum = parseFloat(inputAmount);
+    const rateNum = parseFloat(rate);
+    const amount = inputAmountNum * rateNum;
 
     // Format based on token decimals
-    if (outputToken === "USDC") {
-      return amount.toFixed(2); // USDC has 6 decimals but we'll show 2 for UI
-    } else {
-      return amount.toFixed(6); // ETH has 18 decimals but we'll show 6 for UI
-    }
+    return outputToken === "USDC" ? amount.toFixed(2) : amount.toFixed(6);
   };
 
   // Handle token swap
@@ -141,10 +132,9 @@ export default function TokenSwap() {
       return;
     }
 
-    // Proceed with swap if tokens are different
-    const temp = inputToken;
+    // Proceed with swap if tokens are different - use React state updater pattern
     setInputToken(outputToken);
-    setOutputToken(temp);
+    setOutputToken(inputToken);
   };
 
   // Mock function to sign a swap transaction
@@ -208,7 +198,13 @@ export default function TokenSwap() {
             <input
               type="number"
               value={inputAmount}
-              onChange={(e) => setInputAmount(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                // Only update if it's a valid number or empty
+                if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                  setInputAmount(value);
+                }
+              }}
               className="w-1/2 text-3xl font-medium focus:outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               placeholder="0"
               min="0"
