@@ -178,8 +178,10 @@ export function BridgeFeeEstimate({
         </Select>
       </div>
 
-      {isBridgeFeeLoading ? (
-        <div className="space-y-4 bg-gray-50 rounded-xl p-4 border border-gray-100">
+      {/* Fee estimate container with fixed height */}
+      <div className="min-h-[180px]">
+        {isBridgeFeeLoading ? (
+          <div className="space-y-4 bg-gray-50 rounded-xl p-4 border border-gray-100 h-full">
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center space-x-2">
@@ -214,14 +216,14 @@ export function BridgeFeeEstimate({
           </div>
         </div>
       ) : isBridgeFeeError ? (
-        <div className="text-sm text-gray-500 bg-gray-50 rounded-xl p-4 border border-gray-100">
+        <div className="text-sm text-gray-500 bg-gray-50 rounded-xl p-4 border border-gray-100 h-full">
           <div className="flex items-center space-x-2 text-red-500">
             <AlertCircle className="h-4 w-4" />
             <span>Error loading fee estimates</span>
           </div>
         </div>
       ) : bridgeFee ? (
-        <div className="space-y-4 bg-gray-50 rounded-xl p-4 border border-gray-100">
+        <div className="space-y-4 bg-gray-50 rounded-xl p-4 border border-gray-100 h-full">
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center space-x-2">
@@ -255,42 +257,47 @@ export function BridgeFeeEstimate({
             )}
           </div>
 
-          {/* Bridge Time Estimate */}
-          {isBridgeTimeLoading && !isBridgeFeeLoading ? (
-            <div className="flex items-center justify-between text-sm border-t pt-3 mt-1">
-              <div className="flex items-center space-x-2">
-                <Clock className="h-4 w-4 text-pink-500" />
-                <span className="text-gray-700">Estimated Time</span>
+          {/* Bridge Time Estimate - Fixed height container */}
+          <div className="border-t mt-3 pt-3 min-h-[32px]">
+            {isBridgeTimeLoading || !bridgeTime ? (
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center space-x-2">
+                  <Clock className="h-4 w-4 text-pink-500" />
+                  <span className="text-gray-700">Estimated Time</span>
+                </div>
+                {isBridgeTimeLoading ? (
+                  <Skeleton className="h-5 w-24" />
+                ) : (
+                  <span className="text-gray-500 text-sm">Calculating...</span>
+                )}
               </div>
-              <Skeleton className="h-5 w-24" />
-            </div>
-          ) : isBridgeTimeError ? (
-            <div className="flex items-center justify-between text-sm border-t pt-3 mt-1">
-              <div className="flex items-center space-x-2">
-                <Clock className="h-4 w-4 text-pink-500" />
-                <span className="text-gray-700">Estimated Time</span>
+            ) : isBridgeTimeError ? (
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center space-x-2">
+                  <Clock className="h-4 w-4 text-pink-500" />
+                  <span className="text-gray-700">Estimated Time</span>
+                </div>
+                <span className="text-red-500 text-sm">Error loading time</span>
               </div>
-              <span className="text-red-500 text-sm">Error loading time</span>
-            </div>
-          ) : (
-            bridgeTime && (
-              <div className="flex items-center justify-between text-sm border-t pt-3 mt-1">
+            ) : (
+              <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center space-x-2">
                   <Clock className="h-4 w-4 text-pink-500" />
                   <span className="text-gray-700">Estimated Time</span>
                 </div>
                 <span className="font-medium">{formatTimeRange(bridgeTime.min, bridgeTime.max)}</span>
               </div>
-            )
-          )}
+            )}
+          </div>
         </div>
       ) : (
-        <div className="text-sm text-gray-500 bg-gray-50 rounded-xl p-4 border border-gray-100">
+        <div className="text-sm text-gray-500 bg-gray-50 rounded-xl p-4 border border-gray-100 h-full">
           {sourceChain === destinationChain
             ? "Source and destination chains must be different"
             : "Unable to fetch bridge fee. Please try again later."}
         </div>
       )}
+      </div>
     </div>
   );
 }

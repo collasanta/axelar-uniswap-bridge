@@ -15,7 +15,7 @@ import { SettingsModal } from "./SettingsModal";
 
 export default function TokenBridge() {
   const { isConnected, connectWallet } = useWallet();
-  const [inputAmount, setInputAmount] = useState<string>("1");
+  const [inputAmount, setInputAmount] = useState<string>("10");
   const [sourceChain, setSourceChain] = useState<string>("ethereum");
   const [destinationChain, setDestinationChain] = useState<string>("polygon");
 
@@ -105,13 +105,13 @@ export default function TokenBridge() {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto border rounded-xl shadow-lg">
-      <CardHeader className="pb-0 !p-2">
+    <Card className="w-full max-w-md mx-auto border rounded-xl shadow-lg flex flex-col" style={{ minHeight: "550px" }}>
+      <CardHeader className="pb-0 !p-2 flex-shrink-0">
         <div className="flex justify-end items-center">
           <SettingsModal slippage={slippage} setSlippage={setSlippage} deadline={deadline} setDeadline={setDeadline} />
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 flex-grow overflow-hidden pb-0">
         <div>
           {/* Token Selection */}
           <BridgeSelection
@@ -134,11 +134,11 @@ export default function TokenBridge() {
           />
         </div>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex-shrink-0 pt-2">
         {isConnected ? (
           <Button
             variant="wallet"
-            className="w-full py-6 rounded-xl"
+            className="w-full py-6 rounded-xl min-h-[60px] flex items-center justify-center"
             onClick={handleBridgeTransaction}
             disabled={
               isBridgeSigning ||
@@ -150,69 +150,77 @@ export default function TokenBridge() {
               !!bridgeTimeError
             }
           >
-            {isBridgeSigning ? (
-              <span className="flex items-center">
-                <svg
-                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                Signing Bridge Transaction...
-              </span>
-            ) : bridgeSignatureComplete ? (
-              <span className="flex items-center">
-                <svg
-                  className="-ml-1 mr-3 h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Bridge Transaction Signed!
-              </span>
-            ) : isBridgeFeeLoading || isBridgeTimeLoading ? (
-              <span className="flex items-center">
-                <svg
-                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                Loading Estimates...
-              </span>
-            ) : bridgeFeeError || bridgeTimeError ? (
-              <span className="flex items-center">
-                <AlertCircle className="h-5 w-5 mr-2 text-white" />
-                Error Loading Estimates
-              </span>
-            ) : (
-              <span className="flex items-center">
-                <ExternalLink className="h-5 w-5 mr-2" />
-                Bridge Tokens
-              </span>
-            )}
+            <div className="flex items-center justify-center w-full">
+              {isBridgeSigning ? (
+                <>
+                  <svg
+                    className="animate-spin mr-3 h-5 w-5 text-white flex-shrink-0"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  <span>Signing Bridge Transaction...</span>
+                </>
+              ) : bridgeSignatureComplete ? (
+                <>
+                  <svg
+                    className="mr-3 h-5 w-5 text-white flex-shrink-0"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Bridge Transaction Signed!</span>
+                </>
+              ) : isBridgeFeeLoading || isBridgeTimeLoading ? (
+                <>
+                  <svg
+                    className="animate-spin mr-3 h-5 w-5 text-white flex-shrink-0"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  <span>Loading Estimates...</span>
+                </>
+              ) : bridgeFeeError || bridgeTimeError ? (
+                <>
+                  <AlertCircle className="h-5 w-5 mr-3 text-white flex-shrink-0" />
+                  <span>Error Loading Estimates</span>
+                </>
+              ) : (
+                <>
+                  <ExternalLink className="h-5 w-5 mr-3 flex-shrink-0" />
+                  <span>Bridge Tokens</span>
+                </>
+              )}
+            </div>
           </Button>
         ) : (
-          <Button variant="wallet" className="w-full py-6 rounded-xl" onClick={connectWallet}>
-            <Wallet className="h-5 w-5 mr-2" />
-            Connect Wallet to Bridge
+          <Button
+            variant="wallet"
+            className="w-full py-6 rounded-xl min-h-[60px] flex items-center justify-center"
+            onClick={connectWallet}
+          >
+            <div className="flex items-center justify-center w-full">
+              <Wallet className="h-5 w-5 mr-3 flex-shrink-0" />
+              <span>Connect Wallet to Bridge</span>
+            </div>
           </Button>
         )}
       </CardFooter>

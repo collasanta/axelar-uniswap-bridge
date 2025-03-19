@@ -19,7 +19,7 @@ import { getUniswapPoolData } from "@/server-actions/uniswap";
 export default function TokenSwap() {
   const { isConnected, connectWallet, chainId, switchNetwork } = useWallet();
   const { toast } = useToast();
-  const [inputAmount, setInputAmount] = useState<string>("1");
+  const [inputAmount, setInputAmount] = useState<string>("10");
   const [inputToken, setInputToken] = useState<string>("ETH");
   const [outputToken, setOutputToken] = useState<string>("USDC");
   const [isCorrectNetwork, setIsCorrectNetwork] = useState<boolean>(true);
@@ -169,8 +169,8 @@ export default function TokenSwap() {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto border rounded-xl shadow-lg">
-      <CardHeader className="pb-0 !p-2">
+    <Card className="w-full max-w-md mx-auto border rounded-xl shadow-lg flex flex-col" style={{ minHeight: "490px" }}>
+      <CardHeader className="pb-0 !p-2 flex-shrink-0">
         <div className="flex justify-between items-center">
           {isCorrectNetwork ? (
             <div className="flex items-center gap-1 text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded-md ml-4">
@@ -191,7 +191,7 @@ export default function TokenSwap() {
           <SettingsModal slippage={slippage} setSlippage={setSlippage} deadline={deadline} setDeadline={setDeadline} />
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 flex-grow pb-0">
         {/* Input Token */}
         <div>
           <div className="flex items-center justify-between p-4 border rounded-xl bg-gray-50">
@@ -401,11 +401,11 @@ export default function TokenSwap() {
           )}
         </div>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex-shrink-0 ">
         {isConnected ? (
           <Button
             variant="wallet"
-            className="w-full py-6 rounded-xl"
+            className="w-full py-6 rounded-xl min-h-[60px] flex items-center justify-center"
             disabled={
               !poolData ||
               inputAmount === "0" ||
@@ -418,69 +418,77 @@ export default function TokenSwap() {
             }
             onClick={handleSwapTransaction}
           >
-            {isSwapSigning ? (
-              <span className="flex items-center">
-                <svg
-                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                Signing Swap Transaction...
-              </span>
-            ) : swapSignatureComplete ? (
-              <span className="flex items-center">
-                <svg
-                  className="-ml-1 mr-3 h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Swap Transaction Signed!
-              </span>
-            ) : isPoolDataLoading ? (
-              <span className="flex items-center">
-                <svg
-                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                Loading Swap Rates...
-              </span>
-            ) : poolDataError ? (
-              <span className="flex items-center">
-                <AlertCircle className="h-5 w-5 mr-2 text-white" />
-                Error Loading Rates
-              </span>
-            ) : (
-              <span className="flex items-center">
-                <ArrowRightLeft className="h-5 w-5 mr-2" />
-                Swap
-              </span>
-            )}
+            <div className="flex items-center justify-center w-full">
+              {isSwapSigning ? (
+                <>
+                  <svg
+                    className="animate-spin mr-3 h-5 w-5 text-white flex-shrink-0"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  <span>Signing Swap Transaction...</span>
+                </>
+              ) : swapSignatureComplete ? (
+                <>
+                  <svg
+                    className="mr-3 h-5 w-5 text-white flex-shrink-0"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Swap Transaction Signed!</span>
+                </>
+              ) : isPoolDataLoading ? (
+                <>
+                  <svg
+                    className="animate-spin mr-3 h-5 w-5 text-white flex-shrink-0"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  <span>Loading Swap Rates...</span>
+                </>
+              ) : poolDataError ? (
+                <>
+                  <AlertCircle className="h-5 w-5 mr-3 text-white flex-shrink-0" />
+                  <span>Error Loading Rates</span>
+                </>
+              ) : (
+                <>
+                  <ArrowRightLeft className="h-5 w-5 mr-3 flex-shrink-0" />
+                  <span>Swap</span>
+                </>
+              )}
+            </div>
           </Button>
         ) : (
-          <Button variant="wallet" className="w-full py-6 rounded-xl" onClick={connectWallet}>
-            <Wallet className="h-5 w-5 mr-2" />
-            Connect Wallet to Swap
+          <Button
+            variant="wallet"
+            className="w-full py-6 rounded-xl min-h-[60px] flex items-center justify-center"
+            onClick={connectWallet}
+          >
+            <div className="flex items-center justify-center w-full">
+              <Wallet className="h-5 w-5 mr-3 flex-shrink-0" />
+              <span>Connect Wallet to Swap</span>
+            </div>
           </Button>
         )}
       </CardFooter>

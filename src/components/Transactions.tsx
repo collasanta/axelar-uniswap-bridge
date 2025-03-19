@@ -139,7 +139,7 @@ export default function Transactions() {
                       {tx.amount > 0 && (
                         <span className="ml-2 flex items-center text-xs text-gray-500">
                           <DollarSign className="h-3 w-3 mr-0.5" />
-                          {tx.amount} {tx.denom.toUpperCase().substring(0, 6)}
+                          {tx.amount.toFixed(2)} {tx.denom.toUpperCase().substring(0, 6)}
                         </span>
                       )}
                     </div>
