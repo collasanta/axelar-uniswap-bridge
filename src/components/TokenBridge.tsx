@@ -22,7 +22,11 @@ export default function TokenBridge() {
   const [slippage, setSlippage] = useState<string>("0.5");
   const [deadline, setDeadline] = useState<string>("30");
 
-  const { data: bridgeFee, isLoading: isBridgeFeeLoading, error: bridgeFeeError } = useQuery<
+  const {
+    data: bridgeFee,
+    isLoading: isBridgeFeeLoading,
+    error: bridgeFeeError,
+  } = useQuery<
     {
       fee: string;
       token: string;
@@ -38,7 +42,11 @@ export default function TokenBridge() {
   });
 
   // Fetch bridge time estimate
-  const { data: bridgeTime, isLoading: isBridgeTimeLoading, error: bridgeTimeError } = useQuery({
+  const {
+    data: bridgeTime,
+    isLoading: isBridgeTimeLoading,
+    error: bridgeTimeError,
+  } = useQuery({
     queryKey: ["bridgeTime", sourceChain, destinationChain],
     queryFn: () => estimateBridgingTime(sourceChain, destinationChain),
     enabled: !!sourceChain && !!destinationChain && sourceChain !== destinationChain,
@@ -119,13 +127,14 @@ export default function TokenBridge() {
       <CardFooter>
         {isConnected ? (
           <Button
-            className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white py-6 rounded-xl font-medium transition-colors"
+            variant="wallet"
+            className="w-full py-6 rounded-xl"
             onClick={handleBridgeTransaction}
             disabled={
-              isBridgeSigning || 
-              isBridgeFeeLoading || 
-              isBridgeTimeLoading || 
-              !inputAmount || 
+              isBridgeSigning ||
+              isBridgeFeeLoading ||
+              isBridgeTimeLoading ||
+              !inputAmount ||
               parseFloat(inputAmount) <= 0 ||
               !!bridgeFeeError ||
               !!bridgeTimeError
@@ -191,10 +200,7 @@ export default function TokenBridge() {
             )}
           </Button>
         ) : (
-          <Button
-            className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white py-6 rounded-xl font-medium transition-colors"
-            onClick={connectWallet}
-          >
+          <Button variant="wallet" className="w-full py-6 rounded-xl" onClick={connectWallet}>
             <Wallet className="h-5 w-5 mr-2" />
             Connect Wallet to Bridge
           </Button>

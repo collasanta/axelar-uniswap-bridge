@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import * as React from "react";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "wallet";
   size?: "default" | "sm" | "lg" | "icon";
 }
 
@@ -26,6 +26,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             "hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800 dark:hover:text-neutral-50":
               variant === "ghost",
             "text-neutral-900 underline-offset-4 hover:underline dark:text-neutral-50": variant === "link",
+            "relative overflow-hidden bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-medium transition-colors before:absolute before:inset-0 before:-translate-x-full before:animate-shimmer before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent":
+              variant === "wallet",
           },
           {
             "h-9 px-4 py-2": size === "default",

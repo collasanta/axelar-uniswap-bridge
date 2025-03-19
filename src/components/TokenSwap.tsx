@@ -404,7 +404,8 @@ export default function TokenSwap() {
       <CardFooter>
         {isConnected ? (
           <Button
-            className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white py-6 rounded-xl font-medium transition-colors"
+            variant="wallet"
+            className="w-full py-6 rounded-xl"
             disabled={
               !poolData ||
               inputAmount === "0" ||
@@ -477,10 +478,7 @@ export default function TokenSwap() {
             )}
           </Button>
         ) : (
-          <Button
-            className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white py-6 rounded-xl font-medium transition-colors"
-            onClick={connectWallet}
-          >
+          <Button variant="wallet" className="w-full py-6 rounded-xl" onClick={connectWallet}>
             <Wallet className="h-5 w-5 mr-2" />
             Connect Wallet to Swap
           </Button>
