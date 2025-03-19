@@ -98,7 +98,7 @@ export default function TokenBridge() {
       <CardContent className="space-y-4">
         <div>
           {/* Token Selection */}
-          <BridgeSelection inputAmount={inputAmount} setInputAmount={setInputAmount} bridgeFee={bridgeFee || null} />
+          <BridgeSelection inputAmount={inputAmount} setInputAmount={setInputAmount} bridgeFee={bridgeFee || null} isBridgeFeeLoading={isBridgeFeeLoading} />
 
           {/* Bridge Fee Estimate */}
           <BridgeFeeEstimate

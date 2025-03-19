@@ -5,6 +5,8 @@ import { TOKENS } from "@/lib/constants";
 import { ArrowDown } from "lucide-react";
 import Image from "next/image";
 
+import { Skeleton } from "@/components/ui/skeleton";
+
 interface BridgeSelectionProps {
   inputAmount: string;
   setInputAmount: (value: string) => void;
@@ -14,15 +16,16 @@ interface BridgeSelectionProps {
     usd?: number;
     details?: { baseFee: string; executionFee: string; gasMultiplier: number };
   } | null;
+  isBridgeFeeLoading?: boolean;
 }
 
-export function BridgeSelection({ inputAmount, setInputAmount, bridgeFee }: BridgeSelectionProps) {
+export function BridgeSelection({ inputAmount, setInputAmount, bridgeFee, isBridgeFeeLoading = false }: BridgeSelectionProps) {
   // Calculate the output amount (input amount minus fee)
   const calculateBridgeOutput = () => {
     if (!inputAmount || parseFloat(inputAmount) <= 0) return "0";
 
     // Default fee percentage if no bridge fee data is available
-    const defaultFeePercentage = 0.001; // 0.1%
+    const defaultFeePercentage = 0.0; // 0.1%
 
     let feeAmount = 0;
 
@@ -88,7 +91,9 @@ export function BridgeSelection({ inputAmount, setInputAmount, bridgeFee }: Brid
       {/* Output Token */}
       <div className="pb-8">
         <div className="flex items-center justify-between p-4 border rounded-xl bg-gray-50">
-          <div className="w-1/2 text-3xl font-medium">{calculateBridgeOutput()}</div>
+          <div className="w-1/2 text-3xl font-medium">
+            {isBridgeFeeLoading ? <Skeleton className="h-8 w-24" /> : calculateBridgeOutput()}
+          </div>
           <div className="w-26 rounded-full border-gray-200 bg-pink-500 text-white hover:bg-pink-600 py-2 px-3 flex items-center justify-center">
             <div className="flex items-center space-x-2">
               <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center">
