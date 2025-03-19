@@ -1,6 +1,5 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { BLOCKCHAIN_FINALITY_TIMES } from "./constants";
 
 /**
  * Combines Tailwind CSS classes
@@ -70,42 +69,35 @@ export function formatTimeAgo(timestamp: number): string {
 }
 
 /**
- * Estimates the time it takes to bridge assets between two chains using Axelar
- * @param sourceChain The source chain name (e.g., 'ethereum', 'polygon')
- * @param destinationChain The destination chain name (e.g., 'avalanche', 'fantom')
- * @returns An object with estimated time in minutes and a formatted string
+ * Formats a time range in minutes to a human-readable string
+ * @param min Minimum time in minutes
+ * @param max Maximum time in minutes
+ * @returns A formatted time string
  */
-export function estimateBridgingTime(sourceChain: string, destinationChain: string): { minutes: number; formatted: string } {
-  // Normalize chain names to lowercase
-  const source = sourceChain.toLowerCase();
-  const destination = destinationChain.toLowerCase();
+export function formatTimeRange(min: number, max: number): string {
+  // Helper function to format a single time value
+  const formatTime = (minutes: number): string => {
+    if (minutes < 1) {
+      return `${Math.round(minutes * 60)} seconds`;
+    } else if (minutes < 60) {
+      const mins = Math.floor(minutes);
+      const seconds = Math.round((minutes - mins) * 60);
+      return mins > 0 
+        ? `${mins} min${mins !== 1 ? 's' : ''}${seconds > 0 ? ` ${seconds} sec` : ''}` 
+        : `${seconds} seconds`;
+    } else {
+      const hours = Math.floor(minutes / 60);
+      const mins = Math.round(minutes % 60);
+      return `${hours} hr${hours !== 1 ? 's' : ''}${mins > 0 ? ` ${mins} min` : ''}`;
+    }
+  };
   
-  // Get finality times for both chains
-  const sourceTime = BLOCKCHAIN_FINALITY_TIMES[source as keyof typeof BLOCKCHAIN_FINALITY_TIMES] || 5; // Default to 5 minutes if chain not found
-  const destTime = BLOCKCHAIN_FINALITY_TIMES[destination as keyof typeof BLOCKCHAIN_FINALITY_TIMES] || 5;
-  
-  // Total estimated time is the sum of both chains' finality times
-  // Plus a small buffer for Axelar network processing (2 minutes)
-  const totalMinutes = sourceTime + destTime + 2;
-  
-  // Format the time string
-  let formatted: string;
-  if (totalMinutes < 1) {
-    formatted = `${Math.round(totalMinutes * 60)} seconds`;
-  } else if (totalMinutes < 60) {
-    const minutes = Math.floor(totalMinutes);
-    const seconds = Math.round((totalMinutes - minutes) * 60);
-    formatted = minutes > 0 
-      ? `${minutes} min${minutes !== 1 ? 's' : ''}${seconds > 0 ? ` ${seconds} sec` : ''}` 
-      : `${seconds} seconds`;
-  } else {
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = Math.round(totalMinutes % 60);
-    formatted = `${hours} hr${hours !== 1 ? 's' : ''}${minutes > 0 ? ` ${minutes} min` : ''}`;
+  // If min and max are close, just show one value
+  if (max - min <= 2) {
+    const avg = (min + max) / 2;
+    return formatTime(avg);
   }
   
-  return {
-    minutes: totalMinutes,
-    formatted
-  };
+  // Otherwise show the range
+  return `${formatTime(min)} - ${formatTime(max)}`;
 }

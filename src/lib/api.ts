@@ -257,9 +257,9 @@ export async function fetchAxelarBridgeFee(sourceChain: string, destinationChain
     console.error("Error fetching Axelar bridge fee:", error);
     // Return fallback data with USDC as the token
     return {
-      fee: "10.50", // Fallback fee in USDC
+      fee: "1.50", // Fallback fee in USDC
       token: "USDC", // Always USDC
-      usd: 10.5,
+      usd: 1.5,
       nativeToken: {
         fee: "0.005",
         token: getNativeToken(sourceChain),
@@ -353,11 +353,11 @@ async function convertToUSD(fee: string, token: string): Promise<number> {
     // This is a simplified implementation
     // In a real app, you would use a price oracle or API
     const tokenPrices: Record<string, number> = {
-      ETH: 3500,
-      MATIC: 0.55,
-      AVAX: 28,
-      FTM: 0.45,
-      BNB: 550,
+      ETH: 1900,
+      MATIC: 0.21,
+      AVAX: 18,
+      FTM: 0.5,
+      BNB: 617,
     };
 
     const feeInToken = parseFloat(fee) / 1e18;
@@ -466,79 +466,50 @@ function generateMockTransactions(count = 10) {
   });
 }
 
-// Estimate bridging time using Axelar network data
+/**
+ * Estimates bridging time between two chains using Axelar network data
+ * Based on Axelar's official finality time documentation
+ * @see https://docs.axelar.dev/learn/txduration
+ */
 export async function estimateBridgingTime(sourceChain: string, destinationChain: string) {
   try {
-    // We could use the Axelar API to get real-time estimates based on recent transactions
-    // For now, we'll use a more accurate static mapping based on typical Axelar finality times
-    const bridgeTimes: Record<string, Record<string, { min: number; max: number }>> = {
-      ethereum: {
-        polygon: { min: 8, max: 20 },
-        avalanche: { min: 10, max: 25 },
-        fantom: { min: 12, max: 30 },
-        arbitrum: { min: 10, max: 25 },
-        optimism: { min: 10, max: 25 },
-        binance: { min: 15, max: 35 },
-      },
-      polygon: {
-        ethereum: { min: 8, max: 20 },
-        avalanche: { min: 10, max: 22 },
-        fantom: { min: 12, max: 25 },
-        arbitrum: { min: 10, max: 22 },
-        optimism: { min: 10, max: 22 },
-        binance: { min: 12, max: 28 },
-      },
-      avalanche: {
-        ethereum: { min: 10, max: 25 },
-        polygon: { min: 10, max: 22 },
-        fantom: { min: 12, max: 25 },
-        arbitrum: { min: 12, max: 25 },
-        optimism: { min: 12, max: 25 },
-        binance: { min: 15, max: 30 },
-      },
-      fantom: {
-        ethereum: { min: 12, max: 30 },
-        polygon: { min: 12, max: 25 },
-        avalanche: { min: 12, max: 25 },
-        arbitrum: { min: 15, max: 30 },
-        optimism: { min: 15, max: 30 },
-        binance: { min: 15, max: 35 },
-      },
-      arbitrum: {
-        ethereum: { min: 10, max: 25 },
-        polygon: { min: 10, max: 22 },
-        avalanche: { min: 12, max: 25 },
-        fantom: { min: 15, max: 30 },
-        optimism: { min: 10, max: 25 },
-        binance: { min: 15, max: 30 },
-      },
-      optimism: {
-        ethereum: { min: 10, max: 25 },
-        polygon: { min: 10, max: 22 },
-        avalanche: { min: 12, max: 25 },
-        fantom: { min: 15, max: 30 },
-        arbitrum: { min: 10, max: 25 },
-        binance: { min: 15, max: 30 },
-      },
-      binance: {
-        ethereum: { min: 15, max: 35 },
-        polygon: { min: 12, max: 28 },
-        avalanche: { min: 15, max: 30 },
-        fantom: { min: 15, max: 35 },
-        arbitrum: { min: 15, max: 30 },
-        optimism: { min: 15, max: 30 },
-      },
+    // Normalize chain names
+    const source = sourceChain.toLowerCase();
+    const destination = destinationChain.toLowerCase();
+
+    // Axelar finality times in minutes for each blockchain
+    // Data from https://docs.axelar.dev/learn/txduration
+    const axelarFinalityTimes: Record<string, number> = {
+      ethereum: 16, // 16 minutes (200 blocks)
+      avalanche: 0.05, // 3 seconds (1 block)
+      polygon: 4.7, // 4:42 minutes (128 blocks)
+      binance: 0.77, // 46 seconds (15 blocks)
+      fantom: 0.05, // 3 seconds (1 block)
+      kava: 0.75, // 45 seconds (1 block)
+      cometbft: 0.02, // Instant
+      optimism: 30, // 30 minutes (1000000 blocks)
+      linea: 81, // 81 minutes (400 blocks)
+      filecoin: 52, // 52 minutes (100 blocks)
+      moonbeam: 0.42, // 25 seconds (1 block)
+      celo: 0.2, // 12 seconds (1 block)
+      arbitrum: 19.1, // 19:06 minutes (1000000 blocks)
+      base: 24, // 24 minutes (1000000 blocks)
     };
 
-    // Get the time range from our mapping
-    const timeRange = bridgeTimes[sourceChain]?.[destinationChain];
+    // Get finality times for source and destination chains
+    const sourceTime = axelarFinalityTimes[source] || 15; // Default if chain not found
+    const destTime = axelarFinalityTimes[destination] || 15;
 
-    if (timeRange) {
-      return timeRange;
-    }
+    // Calculate total time (source finality + destination finality + Axelar processing)
+    // Add a small buffer for Axelar network processing (2-5 minutes)
+    const axelarProcessingTime = 3;
+    const totalTime = sourceTime + destTime + axelarProcessingTime;
 
-    // If the specific route isn't found, provide a reasonable default
-    return { min: 15, max: 30 };
+    // Create a reasonable min-max range (±20% from the calculated time)
+    const min = Math.max(1, Math.floor(totalTime * 0.8));
+    const max = Math.ceil(totalTime * 1.2);
+
+    return { min, max };
   } catch (error) {
     console.error("Error estimating bridging time:", error);
     return { min: 15, max: 30 }; // Default fallback

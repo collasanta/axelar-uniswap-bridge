@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CHAINS } from "@/lib/constants";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatTimeRange } from "@/lib/utils";
 import { Clock, DollarSign, ExternalLink } from "lucide-react";
 import Image from "next/image";
 
@@ -223,7 +223,7 @@ export function BridgeFeeEstimate({
                 <span className="text-gray-700">Estimated Time</span>
               </div>
               <span className="font-medium">
-                {bridgeTime.min}-{bridgeTime.max} minutes
+                {formatTimeRange(bridgeTime.min, bridgeTime.max)}
               </span>
             </div>
           )}

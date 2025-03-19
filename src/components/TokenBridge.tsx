@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { estimateBridgingTime, fetchAxelarBridgeFee } from "@/lib/api";
 
-// Import our components
 import { BridgeFeeEstimate } from "./BridgeFeeEstimate";
 import { BridgeSelection } from "./BridgeSelection";
 import { SettingsModal } from "./SettingsModal";
@@ -17,7 +16,6 @@ import { SettingsModal } from "./SettingsModal";
 export default function TokenBridge() {
   const { isConnected, connectWallet } = useWallet();
   const [inputAmount, setInputAmount] = useState<string>("1");
-  // Lock tokens to USDC for both input and output
   const [sourceChain, setSourceChain] = useState<string>("ethereum");
   const [destinationChain, setDestinationChain] = useState<string>("polygon");
 
@@ -98,7 +96,12 @@ export default function TokenBridge() {
       <CardContent className="space-y-4">
         <div>
           {/* Token Selection */}
-          <BridgeSelection inputAmount={inputAmount} setInputAmount={setInputAmount} bridgeFee={bridgeFee || null} isBridgeFeeLoading={isBridgeFeeLoading} />
+          <BridgeSelection
+            inputAmount={inputAmount}
+            setInputAmount={setInputAmount}
+            bridgeFee={bridgeFee || null}
+            isBridgeFeeLoading={isBridgeFeeLoading}
+          />
 
           {/* Bridge Fee Estimate */}
           <BridgeFeeEstimate
