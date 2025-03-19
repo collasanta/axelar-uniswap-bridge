@@ -7,7 +7,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { estimateBridgingTime, fetchAxelarBridgeFee } from "@/lib/api";
+import { getBridgeFee, getBridgeTime } from "@/server-actions/bridge";
 
 import { BridgeFeeEstimate } from "./BridgeFeeEstimate";
 import { BridgeSelection } from "./BridgeSelection";
@@ -36,7 +36,13 @@ export default function TokenBridge() {
     Error
   >({
     queryKey: ["bridgeFee", sourceChain, destinationChain, "USDC"],
-    queryFn: () => fetchAxelarBridgeFee(sourceChain, destinationChain, "USDC"),
+    queryFn: () =>
+      getBridgeFee({
+        sourceChain,
+        destinationChain,
+        tokenSymbol: "USDC",
+        amount: inputAmount,
+      }),
     enabled: !!sourceChain && !!destinationChain && sourceChain !== destinationChain,
     staleTime: 60000, // 1 minute
   });
@@ -48,9 +54,13 @@ export default function TokenBridge() {
     error: bridgeTimeError,
   } = useQuery({
     queryKey: ["bridgeTime", sourceChain, destinationChain],
-    queryFn: () => estimateBridgingTime(sourceChain, destinationChain),
+    queryFn: () =>
+      getBridgeTime({
+        sourceChain,
+        destinationChain,
+      }),
     enabled: !!sourceChain && !!destinationChain && sourceChain !== destinationChain,
-    staleTime: 300000, // 5 minutes
+    staleTime: 60000, // 5 minutes
   });
 
   // Handle chain swap

@@ -6,41 +6,29 @@ import { AlertCircle, ArrowRightLeft, ChevronDown, Clock, DollarSign, ExternalLi
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fetchAxelarTransactions } from "@/lib/api";
 import { TRANSACTION_STATUS } from "@/lib/constants";
+import { type AxelarTransaction } from "@/lib/transaction-utils";
 import { formatTimeAgo, shortenAddress, shortenTxHash } from "@/lib/utils";
+import { getAxelarTransactions } from "@/server-actions/transactions";
 
-interface Transaction {
-  id: string;
-  txHash: string;
-  sourceChain: string;
-  destinationChain: string;
-  status: string;
-  amount: number;
-  denom: string;
-  senderAddress: string;
-  recipientAddress: string;
-  createdAt: number;
-  timeSpent: number;
-}
+// Use the AxelarTransaction type from transaction-utils.ts
+type Transaction = AxelarTransaction;
 
 export default function Transactions() {
   // Fetch recent transactions with infinite query - 5 items per page
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, refetch, isRefetching } = useInfiniteQuery({
     queryKey: ["transactions"],
-    queryFn: ({ pageParam }) => fetchAxelarTransactions(5, pageParam),
+    queryFn: ({ pageParam }) => getAxelarTransactions({ limit: 5, offset: pageParam }),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
       // If we got fewer results than requested, we've reached the end
-      if (lastPage.length < 5) return undefined;
+      if (lastPage.transactions.length < 5) return undefined;
       return allPages.length * 5; // Next offset
     },
-    staleTime: 30000, // 30 seconds
-    refetchInterval: 30000, // Refetch every 30 seconds
   });
 
   // Flatten all pages of transactions
-  const transactions = data?.pages.flat() || [];
+  const transactions = data?.pages.flatMap((page) => page.transactions) || [];
 
   // Get status badge color
   const getStatusColor = (status: string) => {

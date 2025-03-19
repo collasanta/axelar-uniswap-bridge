@@ -12,9 +12,9 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { fetchUniswapPoolData, uniswapEthereumClient } from "@/lib/api";
 import { CHAINS, POOL_ADDRESSES, TOKENS } from "@/lib/constants";
 import { formatCurrency } from "@/lib/utils";
+import { getUniswapPoolData } from "@/server-actions/uniswap";
 
 export default function TokenSwap() {
   const { isConnected, connectWallet, chainId, switchNetwork } = useWallet();
@@ -63,7 +63,7 @@ export default function TokenSwap() {
     error: poolDataError,
   } = useQuery({
     queryKey: ["poolData", "ethereum", inputToken, outputToken],
-    queryFn: () => {
+    queryFn: async () => {
       // Create the pool key based on the tokens
       let poolKey;
 
@@ -75,12 +75,12 @@ export default function TokenSwap() {
       } else {
         // For other token pairs, we'll use a fallback
         console.log("Using fallback for token pair:", inputToken, outputToken);
-        return fetchUniswapPoolData("", uniswapEthereumClient);
+        return await getUniswapPoolData({ poolAddress: "" });
       }
 
       console.log("Using pool key:", poolKey);
       const poolAddress = POOL_ADDRESSES[poolKey as keyof typeof POOL_ADDRESSES];
-      return fetchUniswapPoolData(poolAddress, uniswapEthereumClient);
+      return await getUniswapPoolData({ poolAddress });
     },
     enabled: !!inputToken && !!outputToken && inputToken !== outputToken && isCorrectNetwork,
     staleTime: 60000, // 1 minute
@@ -347,7 +347,7 @@ export default function TokenSwap() {
 
         {/* Swap Details */}
         <div className="space-y-1 pt-6 border-t">
-          <h3 className="text-sm font-medium text-gray-700">Swap Details</h3>
+          <h3 className="text-sm font-medium text-gray-700 pl-2">Swap Details</h3>
           {isPoolDataLoading ? (
             <div className="space-y-4 bg-gray-50 rounded-xl p-4 border border-gray-100">
               <div className="space-y-2">

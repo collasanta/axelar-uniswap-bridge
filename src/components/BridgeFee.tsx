@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { estimateBridgingTime, fetchAxelarBridgeFee } from "@/lib/api";
+import { getBridgeFee, getBridgeTime } from "@/server-actions/bridge";
 import { formatCurrency, formatTimeRange } from "@/lib/utils";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
 import { DialogHeader } from "./ui/dialog";
@@ -74,7 +74,7 @@ export default function BridgeFee({ sourceChain, destinationChain, token }: Brid
     error: bridgeFeeError,
   } = useQuery({
     queryKey: ["bridgeFee", sourceChain, destinationChain, token],
-    queryFn: () => fetchAxelarBridgeFee(sourceChain, destinationChain, token),
+    queryFn: () => getBridgeFee({ sourceChain, destinationChain, tokenSymbol: token, amount: '1' }),
     enabled: !!sourceChain && !!destinationChain && !!token && sourceChain !== destinationChain,
     staleTime: 60000, // 1 minute
   });
@@ -86,7 +86,7 @@ export default function BridgeFee({ sourceChain, destinationChain, token }: Brid
     error: bridgeTimeError,
   } = useQuery({
     queryKey: ["bridgeTime", sourceChain, destinationChain],
-    queryFn: () => estimateBridgingTime(sourceChain, destinationChain),
+    queryFn: () => getBridgeTime({ sourceChain, destinationChain }),
     enabled: !!sourceChain && !!destinationChain && sourceChain !== destinationChain,
     staleTime: 60000, // 1 minute
   });

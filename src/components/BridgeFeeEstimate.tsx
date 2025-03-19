@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CHAINS } from "@/lib/constants";
@@ -53,7 +52,6 @@ export function BridgeFeeEstimate({
   setSourceChain,
   destinationChain,
   setDestinationChain,
-  handleSwapChains,
   isBridgeFeeLoading,
   isBridgeFeeError,
   isBridgeTimeLoading,
@@ -91,7 +89,7 @@ export function BridgeFeeEstimate({
   return (
     <div className="space-y-1 pt-1 border-t">
       {/* Source Chain */}
-      <div className="mb-2 mt-3">
+      <div className="mt-3">
         <div className="flex justify-between items-center">
           <label className="text-sm font-medium text-gray-500 pl-2">Source Chain</label>
         </div>
@@ -138,8 +136,7 @@ export function BridgeFeeEstimate({
       {/* Destination Chain */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-gray-500 pl-2">Destination Chain</label>
-          <Button variant="ghost" size="icon" onClick={handleSwapChains} className="text-gray-500 hover:text-gray-700"></Button>
+          <label className="text-sm font-medium text-gray-500 pl-2 pt-2">Destination Chain</label>
         </div>
         <Select value={destinationChain} onValueChange={handleDestinationChainChange}>
           <SelectTrigger className="rounded-xl border-gray-200 bg-gray-50 hover:bg-gray-100">
