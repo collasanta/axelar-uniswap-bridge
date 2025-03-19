@@ -305,7 +305,7 @@ export default function TokenSwap() {
             >
               <SelectTrigger className="w-32 rounded-full border-gray-200 bg-pink-500 text-white hover:bg-pink-600">
                 <div className="flex items-center space-x-2">
-                  <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center">
+                  <div className="w-6 h-6 rounded-full  flex items-center justify-center">
                     <Image
                       src={TOKENS[outputToken as keyof typeof TOKENS].logo}
                       alt={TOKENS[outputToken as keyof typeof TOKENS].name}
@@ -401,7 +401,7 @@ export default function TokenSwap() {
           )}
         </div>
       </CardContent>
-      <CardFooter className="flex-shrink-0 ">
+      <CardFooter className="flex-shrink-0 pt-0">
         {isConnected ? (
           <Button
             variant="wallet"

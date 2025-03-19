@@ -59,12 +59,13 @@ export function BridgeSelection({ inputAmount, setInputAmount, bridgeFee, isBrid
             placeholder="0"
             min="0"
           />
-          <div className="w-26 rounded-full border-gray-200 bg-white hover:bg-gray-50 py-2 px-3 flex items-center justify-center border">
+          <div className="w-[128px] rounded-full border-gray-200 bg-white hover:bg-gray-50 py-2 px-3 flex items-center justify-center border h-[40px] ">
             <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 rounded-full flex items-center justify-center bg-gray-100">
+              <div className="w-5 h-5 rounded-full flex items-center justify-center bg-gray-100">
                 <Image src={TOKENS.USDC.logo} alt={TOKENS.USDC.name} width={20} height={20} className="w-5 h-5" />
               </div>
               <span className="text-sm">USDC</span>
+              <span className="w-6"></span>
             </div>
           </div>
         </div>
@@ -87,12 +88,13 @@ export function BridgeSelection({ inputAmount, setInputAmount, bridgeFee, isBrid
           <div className="w-1/2 text-3xl font-medium">
             {isBridgeFeeLoading ? <Skeleton className="h-8 w-24" /> : calculateBridgeOutput()}
           </div>
-          <div className="w-26 rounded-full border-gray-200 bg-pink-500 text-white hover:bg-pink-600 py-2 px-3 flex items-center justify-center">
+          <div className="w-[128px] h-[40px] rounded-full border-gray-200 bg-pink-500 text-white hover:bg-pink-600 py-2 px-3 flex items-center justify-center">
             <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center">
+              <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center">
                 <Image src={TOKENS.USDC.logo} alt={TOKENS.USDC.name} width={20} height={20} className="w-5 h-5" />
               </div>
               <span className="text-sm">USDC</span>
+              <span className="w-6"></span>
             </div>
           </div>
         </div>

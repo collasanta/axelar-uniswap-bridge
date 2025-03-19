@@ -111,7 +111,7 @@ export default function TokenBridge() {
           <SettingsModal slippage={slippage} setSlippage={setSlippage} deadline={deadline} setDeadline={setDeadline} />
         </div>
       </CardHeader>
-      <CardContent className="space-y-4 flex-grow overflow-hidden pb-0">
+      <CardContent className="space-y-4 flex-grow overflow-hidden">
         <div>
           {/* Token Selection */}
           <BridgeSelection
@@ -134,7 +134,7 @@ export default function TokenBridge() {
           />
         </div>
       </CardContent>
-      <CardFooter className="flex-shrink-0 pt-2">
+      <CardFooter className="flex-shrink-0 mt-auto">
         {isConnected ? (
           <Button
             variant="wallet"
