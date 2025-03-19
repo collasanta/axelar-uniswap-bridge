@@ -31,7 +31,7 @@ export default function Home() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="swap" className="space-y-6">
-            <TokenSwap showChainSelection={false} />
+            <TokenSwap />
           </TabsContent>
           <TabsContent value="bridge" className="space-y-6">
             <TokenBridge />

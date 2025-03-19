@@ -2,39 +2,67 @@
 
 import { useWallet } from "@/context/WalletContext";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDown, BarChart2, Percent, RefreshCw, Wallet } from "lucide-react";
+import { ArrowDown, BarChart2, Percent, Wallet } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SettingsModal } from "./SettingsModal";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 import { fetchUniswapPoolData, uniswapEthereumClient } from "@/lib/api";
 import { CHAINS, POOL_ADDRESSES, TOKENS } from "@/lib/constants";
 import { formatCurrency } from "@/lib/utils";
 
-interface TokenSwapProps {
-  showChainSelection?: boolean;
-}
-
-export default function TokenSwap({ showChainSelection = true }: TokenSwapProps) {
-  const { isConnected, connectWallet } = useWallet();
+export default function TokenSwap() {
+  const { isConnected, connectWallet, chainId, switchNetwork } = useWallet();
+  const { toast } = useToast();
   const [inputAmount, setInputAmount] = useState<string>("1");
   const [inputToken, setInputToken] = useState<string>("ETH");
   const [outputToken, setOutputToken] = useState<string>("USDC");
-  const [sourceChain, setSourceChain] = useState<string>("ethereum");
-  const [destinationChain, setDestinationChain] = useState<string>("polygon");
+  const [isCorrectNetwork, setIsCorrectNetwork] = useState<boolean>(true);
 
   const [slippage, setSlippage] = useState<string>("0.5");
   const [deadline, setDeadline] = useState<string>("30");
   const [isSwapSigning, setIsSwapSigning] = useState<boolean>(false);
   const [swapSignatureComplete, setSwapSignatureComplete] = useState<boolean>(false);
 
+  // Check if user is on Ethereum mainnet
+  useEffect(() => {
+    if (chainId && chainId !== CHAINS.ethereum.id) {
+      setIsCorrectNetwork(false);
+    } else {
+      setIsCorrectNetwork(true);
+    }
+  }, [chainId]);
+
+  // Handle network switch
+  const handleSwitchToEthereum = async () => {
+    if (!isConnected) {
+      await connectWallet();
+    } else {
+      const success = await switchNetwork(CHAINS.ethereum.id);
+      if (success) {
+        setIsCorrectNetwork(true);
+        toast({
+          title: "Network Changed",
+          description: "Successfully switched to Ethereum Mainnet",
+          variant: "success",
+          className: "bg-green-50 border border-green-100 shadow-md",
+        });
+      }
+    }
+  };
+
   // Fetch pool data
-  const { data: poolData, isLoading: isPoolDataLoading, error: poolDataError } = useQuery({
-    queryKey: ["poolData", sourceChain, inputToken, outputToken],
+  const {
+    data: poolData,
+    isLoading: isPoolDataLoading,
+    error: poolDataError,
+  } = useQuery({
+    queryKey: ["poolData", "ethereum", inputToken, outputToken],
     queryFn: () => {
       // Create the pool key based on the tokens
       let poolKey;
@@ -54,7 +82,7 @@ export default function TokenSwap({ showChainSelection = true }: TokenSwapProps)
       const poolAddress = POOL_ADDRESSES[poolKey as keyof typeof POOL_ADDRESSES];
       return fetchUniswapPoolData(poolAddress, uniswapEthereumClient);
     },
-    enabled: !!sourceChain && !!inputToken && !!outputToken && inputToken !== outputToken,
+    enabled: !!inputToken && !!outputToken && inputToken !== outputToken && isCorrectNetwork,
     staleTime: 60000, // 1 minute
     retry: 2, // Retry failed requests up to 2 times
   });
@@ -79,25 +107,12 @@ export default function TokenSwap({ showChainSelection = true }: TokenSwapProps)
       return (1 / parseFloat(poolData.ethPriceUSD)).toFixed(6);
     }
 
-    // Fallback calculation using pool data
-    // In Uniswap V3, token0 is USDC and token1 is WETH based on the response
-    if (token0Symbol === "USDC" && (token1Symbol === "WETH" || token1Symbol === "ETH")) {
-      if (inputToken === "USDC") {
-        // USDC to ETH rate (how much ETH for 1 USDC)
-        return (parseFloat(poolData.volumeToken1) / parseFloat(poolData.volumeToken0)).toFixed(6);
-      } else {
-        // ETH to USDC rate (how much USDC for 1 ETH)
-        return (parseFloat(poolData.volumeToken0) / parseFloat(poolData.volumeToken1)).toFixed(2);
-      }
-    }
-
-    // Generic fallback
-    return (parseFloat(poolData.volumeUSD) / parseFloat(poolData.volumeToken0)).toFixed(2);
+    console.error("Error calculating swapRate");
+    return 0;
   };
 
   // Calculate output amount
   const calculateOutputAmount = () => {
-    if (areTokensIdentical) return inputAmount; // Same token, same amount
     if (!poolData || !inputAmount) return "0";
 
     const rate = calculateSwapRate();
@@ -113,13 +128,23 @@ export default function TokenSwap({ showChainSelection = true }: TokenSwapProps)
 
   // Handle token swap
   const handleSwapTokens = () => {
+    // Check if tokens are identical
+    if (inputToken === outputToken) {
+      // Show toast message instead of swapping
+      toast({
+        title: "Cannot Swap Identical Tokens",
+        description: "Please select different tokens for input and output",
+        variant: "warning",
+        className: "bg-pink-50 border border-pink-100 shadow-md",
+      });
+      return;
+    }
+
+    // Proceed with swap if tokens are different
     const temp = inputToken;
     setInputToken(outputToken);
     setOutputToken(temp);
   };
-  
-  // Check if the tokens are identical
-  const areTokensIdentical = inputToken === outputToken;
 
   // Mock function to sign a swap transaction
   const handleSwapTransaction = async () => {
@@ -152,51 +177,30 @@ export default function TokenSwap({ showChainSelection = true }: TokenSwapProps)
     }
   };
 
-  // Handle chain swap
-  const handleSwapChains = () => {
-    const temp = sourceChain;
-    setSourceChain(destinationChain);
-    setDestinationChain(temp);
-  };
-
   return (
     <Card className="w-full max-w-md mx-auto border rounded-xl shadow-lg">
       <CardHeader className="pb-0 !p-2">
-        <div className="flex justify-end items-center">
-          <SettingsModal 
-            slippage={slippage}
-            setSlippage={setSlippage}
-            deadline={deadline}
-            setDeadline={setDeadline}
-          />
+        <div className="flex justify-between items-center">
+          {isCorrectNetwork ? (
+            <div className="flex items-center gap-1 text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded-md ml-4">
+              <Image src="/images/eth.svg" alt="Ethereum" width={16} height={16} />
+              <span>Ethereum</span>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSwitchToEthereum}
+              className="text-xs bg-red-50 border-red-200 text-red-700 hover:bg-red-100 flex items-center gap-1"
+            >
+              <Image src="/images/eth.svg" alt="Ethereum" width={16} height={16} />
+              <span>Switch to Ethereum</span>
+            </Button>
+          )}
+          <SettingsModal slippage={slippage} setSlippage={setSlippage} deadline={deadline} setDeadline={setDeadline} />
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-
-        {/* Source Chain - Only shown if showChainSelection is true */}
-        {showChainSelection ? (
-          <div className="mb-2">
-            <div className="flex justify-between items-center">
-              <label className="text-sm font-medium text-gray-500">Source Chain</label>
-            </div>
-            <Select value={sourceChain} onValueChange={setSourceChain}>
-              <SelectTrigger className="rounded-xl border-gray-200 bg-gray-50 hover:bg-gray-100">
-                <SelectValue placeholder="Select source chain" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(CHAINS).map(([id, chain]) => (
-                  <SelectItem key={id} value={id}>
-                    {chain.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        ) : (
-          // If chain selection is hidden, we still need to set a default source chain
-          <input type="hidden" value={sourceChain} />
-        )}
-
         {/* Input Token */}
         <div>
           <div className="flex items-center justify-between p-4 border rounded-xl bg-gray-50">
@@ -208,7 +212,23 @@ export default function TokenSwap({ showChainSelection = true }: TokenSwapProps)
               placeholder="0"
               min="0"
             />
-            <Select value={inputToken} onValueChange={setInputToken}>
+            <Select
+              value={inputToken}
+              onValueChange={(value) => {
+                // Check if the new input token is the same as the output token
+                if (value === outputToken) {
+                  // Show toast message
+                  toast({
+                    title: "Cannot Select Identical Tokens",
+                    description: "Please select different tokens for input and output",
+                    variant: "warning",
+                    className: "bg-pink-50 border border-pink-100 shadow-md",
+                  });
+                  return;
+                }
+                setInputToken(value);
+              }}
+            >
               <SelectTrigger className="w-32 rounded-full border-gray-200 bg-white hover:bg-gray-50">
                 <div className="flex items-center space-x-2">
                   <div className="w-6 h-6 rounded-full flex items-center justify-center bg-gray-100">
@@ -269,7 +289,23 @@ export default function TokenSwap({ showChainSelection = true }: TokenSwapProps)
             <div className="w-1/2 text-3xl font-medium">
               {isPoolDataLoading ? <Skeleton className="h-8 w-24" /> : calculateOutputAmount()}
             </div>
-            <Select value={outputToken} onValueChange={setOutputToken}>
+            <Select
+              value={outputToken}
+              onValueChange={(value) => {
+                // Check if the new output token is the same as the input token
+                if (value === inputToken) {
+                  // Show toast message
+                  toast({
+                    title: "Cannot Select Identical Tokens",
+                    description: "Please select different tokens for input and output",
+                    variant: "warning",
+                    className: "bg-pink-50 border border-pink-100 shadow-md",
+                  });
+                  return;
+                }
+                setOutputToken(value);
+              }}
+            >
               <SelectTrigger className="w-32 rounded-full border-gray-200 bg-pink-500 text-white hover:bg-pink-600">
                 <div className="flex items-center space-x-2">
                   <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center">
@@ -289,7 +325,7 @@ export default function TokenSwap({ showChainSelection = true }: TokenSwapProps)
               </SelectTrigger>
               <SelectContent>
                 {Object.entries(TOKENS).map(([symbol, token]) => (
-                  <SelectItem key={symbol} value={symbol} disabled={symbol === inputToken}>
+                  <SelectItem key={symbol} value={symbol}>
                     <div className="flex items-center space-x-2">
                       <div className="w-6 h-6 rounded-full flex items-center justify-center bg-gray-100">
                         <Image
@@ -309,39 +345,8 @@ export default function TokenSwap({ showChainSelection = true }: TokenSwapProps)
                 ))}
               </SelectContent>
             </Select>
-            {areTokensIdentical && (
-              <div className="absolute inset-x-0 -bottom-6 text-center">
-                <span className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded-full">
-                  Input and output tokens must be different
-                </span>
-              </div>
-            )}
           </div>
         </div>
-
-        {/* Destination Chain - Only shown if showChainSelection is true */}
-        {showChainSelection && (
-          <div className="pt-1">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-500">Destination Chain</label>
-              <Button variant="ghost" size="icon" onClick={handleSwapChains} className="text-gray-500 hover:text-gray-700">
-                <RefreshCw className="h-4 w-4" />
-              </Button>
-            </div>
-            <Select value={destinationChain} onValueChange={setDestinationChain}>
-              <SelectTrigger className="rounded-xl border-gray-200 bg-gray-50 hover:bg-gray-100">
-                <SelectValue placeholder="Select destination chain" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(CHAINS).map(([id, chain]) => (
-                  <SelectItem key={id} value={id} disabled={id === sourceChain}>
-                    {chain.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
 
         {/* Swap Details */}
         <div className="space-y-1 pt-6 border-t">
@@ -370,9 +375,9 @@ export default function TokenSwap({ showChainSelection = true }: TokenSwapProps)
                 </div>
               </div>
             </div>
-          ) : areTokensIdentical ? (
+          ) : inputToken === outputToken ? (
             <div className="text-sm text-gray-500 bg-gray-50 rounded-xl p-4 border border-gray-100">
-              Please select different input and output tokens
+              No pool data available for identical tokens
             </div>
           ) : poolDataError ? (
             <div className="text-sm text-gray-500 bg-gray-50 rounded-xl p-4 border border-gray-100">
@@ -389,7 +394,7 @@ export default function TokenSwap({ showChainSelection = true }: TokenSwapProps)
         {isConnected ? (
           <Button
             className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white py-6 rounded-xl font-medium transition-colors"
-            disabled={!poolData || inputAmount === "0" || !inputAmount || isSwapSigning || areTokensIdentical}
+            disabled={!poolData || inputAmount === "0" || !inputAmount || isSwapSigning || inputToken === outputToken}
             onClick={handleSwapTransaction}
           >
             {isSwapSigning ? (
